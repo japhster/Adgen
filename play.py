@@ -1,8 +1,10 @@
 import sys
 import copy
+import os
 
 from generate_world import deconstruct_literal, make_actual_condition, get_positive_version
 from actions import all_actions
+from actions import Move, Unlock, Take, Open, ClearDarkness, Talk
 
 
 
@@ -39,16 +41,13 @@ def print_state(state):
     items = get_items(state,location)
     exits = get_exits(state,location)
 
-    print("Location: " + location)
-    print("Items in location: " + ", ".join(items))
-    print("Exits from location: ")
-    for exit in exits:
-        print("Move {0}: {1}".format(exit[0],exit[1]))
+    print("You are in a room.")
+    print("You can see: " + (", ".join(items) if items else "nothing"))
+    print("You can move: " + ", ".join([exit[0] for exit in exits]))
 
 def goal_reached(state,goal_state):
     for item in goal_state:
         if item[0][0] != "!" and item not in state:
-            print(item)
             return False
         if item[0][0] == "!" and get_positive_version(item) in state:
             return False
@@ -68,24 +67,35 @@ if __name__ == "__main__":
         goal_state = set([deconstruct_literal(literal + ")") for literal in line])
         
     current_state = copy.copy(initial_state)
-    
+    performed = True
     while True:
+        os.system("clear")
+        if not performed:
+            print("I cannot \"{0}\" at this point in time".format(" ".join(instruction)))
         print_state(current_state)
         #get instruction
         instruction = tuple(input(">").split())
-        if instruction == ():
+        
+        if not instruction:
             break
-        #get action for instruction        
-        definition = all_actions[instruction[0]]
+        #get action for instruction
+        try:
+            action = {"move":Move,"unlock":Unlock,"take":Take,
+                           "cleardarkness":ClearDarkness,"open":Open,
+                           "talk":Talk}[instruction[0].lower()](current_state, *instruction).action
+        except KeyError:
+            print("Sorry, I don't understand that command.")
+        definition = all_actions[action[0]]
         #check action can be performed
-        preconditions = [make_actual_condition(instruction,definition,precond) for precond in definition[1]]
+        preconditions = [make_actual_condition(action,definition,precond) for precond in definition[1]]
         if action_is_possible(current_state,preconditions):
             #perform action
-            postconditions = [make_actual_condition(instruction,definition,postcond) for postcond in definition[2]]
+            postconditions = [make_actual_condition(action,definition,postcond) for postcond in definition[2]]
             perform_action(current_state,postconditions)
+            performed = True
         else:
             #action can't be performed so inform player
-            print("This action cannot be performed at this time for the above reason.")
+            performed = False
         #check if goal state has been reached
         if goal_reached(current_state,goal_state):
             print("You Win!")
