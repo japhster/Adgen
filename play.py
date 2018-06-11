@@ -13,7 +13,10 @@ def get_items(state, room):
 
 def get_exits(state, room):
     return [(item[3], item[2]) for item in state if item[0] == "NextTo" and item[1] == room]
-
+    
+def get_locked_doors(state,room):
+    pass
+    
 def action_is_possible(state,preconditions):
     for precond in preconditions:
         #if condition is negative and its positive is in the state the action can't happen
@@ -40,6 +43,7 @@ def print_state(state):
 
     items = get_items(state,location)
     exits = get_exits(state,location)
+    locked_doors = []
 
     print("You are in a room.")
     print("You can see: " + (", ".join(items) if items else "nothing"))
