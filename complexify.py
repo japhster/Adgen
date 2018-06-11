@@ -1,0 +1,301 @@
+import copy
+import re
+from collections import defaultdict
+import random
+
+def complexify(initial_state, goal_state, room_complexity=10, item_complexity=10):
+    initial_complexity = measure_complexity(initial_state,"both")
+    #print(initial_complexity)
+    state = copy.copy(initial_state)
+    #understand what each literal means
+    #get a list of room names and item names
+    rooms, items = breakdown(state)
+    #add new rooms in with appropriate neighbours and unique names
+    state = add_rooms(state, goal_state, room_complexity)        
+    new_complexity = measure_complexity(state,"both")
+    #add new items into the rooms with appropriate features
+    options = {lock_doors,darken}
+    for option in options:
+        new_state = option(state)
+        if new_state != None:
+            state = new_state
+
+    return state
+
+def breakdown(state,returns="both"):
+    """
+    returns a list of strings representing the names of the rooms and a list of strings representing the names of items
+    """
+    rooms = set()
+    items = set()
+    for item in state:
+        if item[0] == "NextTo":
+            rooms.add(item[1])
+            rooms.add(item[2])
+        elif item[0] == "In":
+            items.add(item[1])
+        elif item[0] == "Contains":
+            items.add(item[1])
+            items.add(item[2])
+        
+    return rooms if returns=="rooms" else (items if returns=="items" else rooms,items) 
+
+def count_blockages(state):
+    blockages = 0
+    for item in state:
+        if item[0] == "HiddenPath" or item[0] == "Lock":
+            blockages += 0.5
+        elif item[0] == "Dark":
+            blockages += 1
+            
+    return blockages
+
+def add_rooms(state, goal, room_complexity):
+    """
+    get the highest unnamed room number (HRN) from form "Room11"
+    add new rooms as named "Room*" where * represents a number higher than the highest number so far
+    """
+    failed = set() #a set of rooms that already have 4 neighbours
+    next_available_number = -1
+    while measure_complexity(state, "rooms") < room_complexity:
+        #generate a dictionary mapping each room to a coordinate relative to the starting room at (0,0)
+        room_map = generate_map(state)
+        #randomly select a room and get all surrounding coordinates that are not already assigned
+        #if no non-assigned coordinates exist, choose another room
+        while True:
+            chosen = random.choice([i for i in room_map.keys() if i not in failed])
+            valid = set([i for i in get_coord_neighbours(room_map[chosen]) if i not in room_map.values()])
+            if (len(valid) == 0) or (("At",chosen) in state) or (("At",chosen) in goal):
+                failed.add(chosen)
+            else:
+                break
+        #randomly select a coordinate from valid coords and find all rooms connected to it
+        new_room = random.choice(list(valid))
+        coord_neighbours = get_coord_neighbours(new_room)
+        named_neighbours = [pair[0] for pair in room_map.items() if pair[1] in coord_neighbours]
+        #find the next available room name in form Room* where * > 0
+        current_rooms = list(breakdown(state,"rooms"))
+        if next_available_number == -1:
+            next_available_number = get_next_available_number(current_rooms)
+        new_room_name = "Room"+str(next_available_number)
+        next_available_number += 1
+        #randomly generate a number of neighbours that will be added
+        num_neighbours = random.randint(1,len(named_neighbours))
+        neighbours_to_add = set()
+        while len(neighbours_to_add) < num_neighbours:
+            neighbours_to_add.add(random.choice(named_neighbours))
+        #add new tuples to the state describing the neighbours of the new room
+        for neighbour in neighbours_to_add:
+            direction = direction_of_coord(new_room,room_map[neighbour]) #from new room to neighbour
+            state.append(("NextTo",new_room_name,neighbour,direction))
+            state.append(("NextTo",neighbour,new_room_name,reverse_direction(direction)))
+        
+    return state
+
+def add_item(state):
+    items = breakdown(state,"items")
+    return state
+
+def lock_doors(state,percent=0.2):
+    """
+    ***currently only has an effect if the player already has a key***
+    ***also could break the initial path through the world***
+    adds locked doors to the state
+    will lock a percentage of the neighbours that aren't already locked in the state based on arg percent
+    """
+    if ("Has","Key") in state:
+        new_state = copy.copy(state)
+        neighbours = get_unique_neighbours(state)
+        not_locked_neighbours = []
+        for pair in neighbours:
+            if not ("Lock",pair[0],pair[1]) in state:
+                not_locked_neighbours.append(pair)                
+        locked = random.sample(not_locked_neighbours, int(len(not_locked_neighbours)*percent))
+        for pair in locked:
+            new_state.append(("Lock",pair[0],pair[1]))
+            new_state.append(("Lock",pair[1],pair[0]))
+        return new_state
+    return None
+    
+def darken(state,percent=0.2):
+    """
+    ***currently only has an effect if the player already has a torch***
+    ***also could break the initial path through the world***
+    adds darkness to a percentage of the rooms in the state based on arg percent
+    """
+    if ("Has","Torch") in state:
+        new_state = copy.copy(state)
+        rooms = breakdown(state,"rooms")
+        light_rooms = []
+        for room in rooms:
+            if not ("Dark",room) in state:
+                light_rooms.append(room)
+        make_dark = random.sample(light_rooms, int(len(light_rooms)*percent))
+        for room in make_dark:
+            new_state.append(("Dark",room))
+        return new_state
+    return None    
+    
+def get_unique_neighbours(state):
+    """
+    returns a set of tuples containing a pair of rooms if they are next to eachother and the direction from 0 to 1
+    removes duplicates. e.g. (room2,room3), (room3,room2)
+    """
+    neighbours = set()
+    for item in state:
+        if item[0] == "NextTo" and (item[2],item[1],reverse_direction(item[3])) not in neighbours:
+            neighbours.add((item[1],item[2],item[3]))
+            
+    return neighbours
+
+def reverse_direction(direction):
+    dirs = {"east":"west","west":"east","south":"north","north":"south"}
+    return dirs[direction]
+
+def coordinate_modifier(coord, direction):
+    mod = {"east":(1,0),"west":(-1,0),"south":(0,-1),"north":(0,1)}[direction]
+    return (coord[0]+mod[0],coord[1]+mod[1])
+    
+def direction_of_coord(start,end):
+    mod = {(1,0):"east",(-1,0):"west",(0,-1):"south",(0,1):"north"}
+    return mod[(end[0]-start[0],end[1]-start[1])]
+    
+    
+def get_start_location(state):
+    """
+    returns the name of the room the player will start in
+    """
+    for item in state:
+        if item[0] == "At":
+            return item[1]
+
+def get_neighbour_counts(state):
+    """
+    returns a dictionary with each room as a key and the number of neighbours that room has as the value
+    """
+    neighbours = get_unique_neighbours(state)
+    neighbour_counts = defaultdict(int)
+    for neighbour in neighbours:
+        neighbour_counts[neighbour[0]] += 1
+        neighbour_counts[neighbour[1]] += 1
+        
+    return neighbour_counts
+        
+def get_next_available_number(rooms):
+    """
+    returns the next number to be used for a room name (e.g. Room2)
+    """
+    unnamed_rooms = [i for i in rooms if re.match("^Room[1-9]{1}[0-9]*$",i)] #matches to "Room*" where * is any number > 0
+    try:
+        next_available_number = int(sorted(unnamed_rooms, key=lambda a:int(a[4:]))[-1][4:]) + 1
+    except IndexError:
+        #no rooms in initial state are of the form Room*
+        next_available_number = 1
+        
+    return next_available_number
+
+def generate_map(state):
+    """
+    returns a dictionary mapping each room to an x,y coordinate relative to the starting room at (0,0)
+    """
+    rooms = {}
+    #get the starting room and give it coordinate (0,0)
+    for i in state:
+        if i[0] == "At":
+            rooms[i[1]] = (0,0)
+    #for each other room that is next to the initial room, give it a coordinate
+    considered = set()
+    while len(considered) != len(get_unique_neighbours(state)):
+        for room1,room2,direction in get_unique_neighbours(state):
+            #if the neighbours haven't already been considered
+            if not tuple(sorted((room1,room2))) in considered:
+                #EITHER:
+                #first room already assigned so assign second room a coordinate
+                if room1 in rooms.keys():
+                    rooms[room2] = coordinate_modifier(rooms[room1],direction)
+                    considered.add(tuple(sorted((room1,room2))))
+                #OR:
+                #second room already assigned so assign first room a coordinate
+                elif room2 in rooms.keys():
+                    rooms[room1] = coordinate_modifier(rooms[room2],reverse_direction(direction))
+                    considered.add(tuple(sorted((room1,room2))))
+
+    return rooms
+
+def get_coord_neighbours(coord):
+    return set([(coord[0]+i[0],coord[1]+i[1]) for i in [(0,1),(1,0),(0,-1),(-1,0)]])
+    
+        
+def measure_complexity(state, measure="both"):
+    """
+    room complexity will be calculated as the sum of the number of branches from each room
+    i.e. number of neighbours of each room -2 for every room that is not the starting room else -1
+         -1 for everything is so that if the room only has 1 neighbour then there are no branches
+         so the difficulty does not increase
+         -1 for non-starting rooms as each room must have had an entrance, which shouldn't be considered as a branch (probably?)
+    """
+    rooms = breakdown(state)[0]
+    num_blockages = count_blockages(state)
+    if measure == "rooms" or measure == "both":
+        neighbour_counts = get_neighbour_counts(state)
+        branches = 0
+        start_loc = get_start_location(state)
+        for room, count in neighbour_counts.items():
+            if ("At",room) in state:
+                room_branches = count
+            else:
+                room_branches = count - 2
+            if room_branches > 0:
+                branches += room_branches
+
+        return branches if measure == "rooms" else branches + num_blockages
+    elif measure == "items":
+        return num_blockages
+
+
+if __name__ == "__main__":
+    original_state = [('At', 'Library'), ('NextTo', 'Office', 'Library', 'south'), ('NextTo', 'Kitchen', 'Office', 'west'),
+                      ('NextTo', 'Office', 'Kitchen', 'east'), ('NextTo', 'Library', 'Office', 'north'), ]
+
+
+    count = 0
+    state = copy.copy(original_state)
+    measure_complexity(original_state,"items")
+    print(measure_complexity([("At", "Kitchen"), ('NextTo', 'Kitchen', 'Office', 'west'),('NextTo', 'Office', 'Kitchen', 'east')], "rooms"))
+    print(measure_complexity([("At", "Kitchen"), ('NextTo', 'Kitchen', 'Office', 'west'),('NextTo', 'Office', 'Kitchen', 'east'),('NextTo', 'Kitchen', 'Library', 'east'),('NextTo', 'Library', 'Kitchen', 'west')], "rooms"))
+    print(measure_complexity([("At", "Kitchen"), ('NextTo', 'Kitchen', 'Office', 'east'),('NextTo', 'Office', 'Kitchen', 'west'),
+                                  ('NextTo', 'Kitchen', 'Library', 'south'),('NextTo', 'Library', 'Kitchen', 'north'),
+                                  ("NextTo", "Office", "Room1", "east"), ("NextTo", "Room1","Office", "west"),
+                                  ("NextTo", "Office", "Room2", "north"), ("NextTo", "Room2", "Office", "south")], "rooms"))
+    while measure_complexity(state,"rooms") < 10:
+        try:
+            state = add_room(state)
+        except ValueError:
+            count += 1
+            break
+        break
+    """
+    print(measure_complexity(state,"rooms"))
+    print(state)
+    print(measure_complexity(state,"items"))
+    state = lock_doors(state)
+    state = darken(state)
+    print(state, measure_complexity(state, "items"))
+    """
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

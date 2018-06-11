@@ -1,0 +1,2 @@
+At(Library)
+Unlock(Office,Hallway,north), MoveNorth(Office,Hallway), MoveNorth(Hallway,Library)

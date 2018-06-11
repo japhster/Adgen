@@ -1,0 +1,8 @@
+Initial state: At(Kitchen),NextTo(Kitchen,Office),NextTo(Office,Kitchen)
+Goal state: At(Office)
+
+Actions:
+
+Move(From,To)
+Preconditions:At(From),!At(To),NextTo(From,To)
+Postconditions:At(To),!At(From)
