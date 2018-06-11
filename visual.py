@@ -5,7 +5,7 @@ def visualise_map(room_map,neighbours):
     pygame.init()
     pygame.font.init()
     font = pygame.font.SysFont("monospace",15)
-    screen = pygame.display.set_mode((500,500))
+    screen = pygame.display.set_mode((1000,1000))
     screen.fill((255,255,255))
     #get the minimum values of x and y
     min_x, min_y = min([i[0] for i in room_map.values()]), min([i[1] for i in room_map.values()])
@@ -41,7 +41,7 @@ def visualise_map(room_map,neighbours):
     for room1,room2,direction in neighbours:
         start = coordinates[room1]
         end = coordinates[room2]
-        multipliers = {"east":(1.8,1,0.2,1),"west":(0.2,1,1.8,1),"north":(1,1.8,1,0.2),"south":(1,0.2,1,1.8)}[direction]
+        multipliers = {"East":(1.8,1,0.2,1),"West":(0.2,1,1.8,1),"North":(1,1.8,1,0.2),"South":(1,0.2,1,1.8)}[direction]
         world_start = (start[0]*multiplier_x+center_offset[0]*multipliers[0],500-(start[1]*multiplier_y+center_offset[1]*multipliers[1]))
         world_end = (end[0]*multiplier_x+center_offset[0]*multipliers[2],500-(end[1]*multiplier_y+center_offset[1]*multipliers[3]))
         pygame.draw.line(screen, (0,0,0), world_start, world_end, 10)
@@ -60,12 +60,12 @@ if __name__ == "__main__":
     room_map = {'Room7': (1, -2), 'Room2': (0, -1), 'Library': (0, 0), 'Room5': (1, 1), 'Room8': (0, -2), 'Room3': (2, 0),
                 'Office': (0, 1), 'Room6': (-2, -1), 'Room11': (-1, 0), 'Room1': (1, -1), 'Room10': (3, 0), 'Room9': (1, 2),
                 'Kitchen': (1, 0), 'Room4': (-1, -1)}
-    neighbours = set([('Kitchen', 'Library', 'west'), ('Room1', 'Kitchen', 'north'), ('Room3', 'Kitchen', 'west'),
-                     ('Room4', 'Room2', 'east'), ('Room10', 'Room3', 'west'), ('Room11', 'Library', 'east'),
-                     ('Room6', 'Room4', 'east'), ('Room7', 'Room1', 'north'), ('Room11', 'Room4', 'south'),
-                     ('Room9', 'Room5', 'south'), ('Room8', 'Room7', 'east'), ('Room2', 'Library', 'north'),
-                     ('Room5', 'Kitchen', 'south'), ('Library', 'Office', 'north'), ('Room8', 'Room2', 'north'),
-                     ('Room2', 'Room1', 'east'), ('Room5', 'Office', 'west')])
+    neighbours = set([('Kitchen', 'Library', "West"), ('Room1', 'Kitchen', "North"), ('Room3', 'Kitchen', "West"),
+                     ('Room4', 'Room2', "East"), ('Room10', 'Room3', "West"), ('Room11', 'Library', "East"),
+                     ('Room6', 'Room4', "East"), ('Room7', 'Room1', "North"), ('Room11', 'Room4', "South"),
+                     ('Room9', 'Room5', "South"), ('Room8', 'Room7', "East"), ('Room2', 'Library', "North"),
+                     ('Room5', 'Kitchen', "South"), ('Library', 'Office', "North"), ('Room8', 'Room2', "North"),
+                     ('Room2', 'Room1', "East"), ('Room5', 'Office', "West")])
 
     visualise_map(room_map,neighbours)
     """

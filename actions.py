@@ -1,35 +1,22 @@
+from complexify import reverse_direction
+
 #("NextTo","Room1","Room2","east") defines that to get from Room1 to Room2 you must go east
 
 all_actions = {
-           "MoveEast": (
-                    ("MoveEast", "From", "To"),
-                    (("At","From"),("!At","To"),("NextTo","From","To","east"),("NextTo","To","From","west"),("!Lock","From","To"),
-                     ("!Dark","To"),("!HiddenPath","To","From")),
-                    (("At","To"),("!At","From"))
-                   ),
-           "MoveWest": (
-                    ("MoveWest", "From", "To"),
-                    (("At","From"),("!At","To"),("NextTo","From","To","west"),("NextTo","To","From","east"),("!Lock","From","To"),
-                     ("!Dark","To"),("!HiddenPath","To","From")),
-                    (("At","To"),("!At","From"))
-                   ),
-           "MoveNorth": (
-                    ("MoveNorth", "From", "To"),
-                    (("At","From"),("!At","To"),("NextTo","From","To","north"),("NextTo","To","From","south"),("!Lock","From","To"),
-                     ("!Dark","To"),("!HiddenPath","To","From")),
-                    (("At","To"),("!At","From"))
-                   ),
-           "MoveSouth": (
-                    ("MoveSouth", "From", "To"),
-                    (("At","From"),("!At","To"),("NextTo","From","To","south"),("NextTo","To","From","north"),("!Lock","From","To"),
+           "Move": (
+                    ("Move", "From", "To", "DirectionFT", "DirectionTF"),
+                    (("At","From"),("!At","To"),("NextTo","From","To","DirectionFT"),("NextTo","To","From","DirectionTF"),
+                     ("!Lock","From","To"),
                      ("!Dark","To"),("!HiddenPath","To","From")),
                     (("At","To"),("!At","From"))
                    ),
            "Unlock": (
-                      ("Unlock","Current","Neighbour","Direction"),
+                      ("Unlock","Current","Neighbour","Direction","Key"),
                       (("At","Current"), ("!At","Neighbour"), ("NextTo","Current","Neighbour","Direction"), ("Has","Key"),
-                       ("Lock","Current","Neighbour"), ("Lock","Neighbour","Current")),
-                      (("!Lock","Current","Neighbour"), ("!Lock","Neighbour","Current"))
+                       ("Lock","Current","Neighbour"), ("Lock","Neighbour","Current"),("LockNeeds","Neighbour","Current","Key"),
+                       ("LockNeeds","Current","Neighbour","Key")),
+                      (("!Lock","Current","Neighbour"), ("!Lock","Neighbour","Current"),("!LockNeeds","Neighbour","Current","Key"),
+                       ("!LockNeeds","Current","Neighbour","Key"))
                      ),
            "Take": (
                     ("Take","Item","Room"),
@@ -46,7 +33,7 @@ all_actions = {
                              (("Has","Item"),("At","From"),("Purpose","Item","Light"),("Dark","To"),
                              ("NextTo","From","To","DirectionFT"),("NextTo","To","From","DirectionTF"),("!Lock","From","To"),
                              ("!Lock","To","From")),
-                             (("!Dark","Room"),)
+                             (("!Dark","To"),)
                             ),
            "Talk": (
                     ("Talk","Person","PersonLocation","Room1","Room2","Direction12","Direction21"),
@@ -57,6 +44,24 @@ all_actions = {
                    ),
           }
           
+          
+
+class Move(object):
+
+    def __init__(self,state,direction):
+        self.name = "Move"
+        self.direction = direction
+        self.required = {"From":self.get_from(state),"To":self.get_To(state),"DirectionFT":direction,"DirectionTF":reverse_direction(direction)}        
+    
+    def get_from(state):
+        for item in state:
+            if item[0] == "At":
+                return item[1]
+    
+    def get_To(state):
+        for item in state:
+            if item[0] == "NextTo" and item[1] == get_from(state) and item[3] == self.direction:
+                return item[2]
           
 if __name__ == "__main__":
     print(all_actions["ClearDarkness"])

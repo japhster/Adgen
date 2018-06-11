@@ -1,2 +1,2 @@
 At(Library), Has(Book)
-Take(Box,Library), Open(Box,Key), Unlock(Library,Office,north), MoveNorth(Library,Office), MoveEast(Office,Bedroom), Take(Torch,Bedroom), MoveWest(Bedroom,Office), ClearDarkness(Office,Kitchen,north,south,Torch), MoveNorth(Office,Kitchen), Take(Book,Kitchen), MoveSouth(Kitchen,Office), MoveSouth(Office,Library)
+Take(Box,Library), Open(Box,RedKey), Unlock(Library,Office,North,RedKey), Move(Library,Office,North,South), Move(Office,Bedroom,East,West), Take(Torch,Bedroom), Move(Bedroom,Office,West,East), ClearDarkness(Office,Kitchen,North,South,Torch), Move(Office,Kitchen,North,South), Take(Book,Kitchen), Move(Kitchen,Office,South,North), Move(Office,Library,South,North)

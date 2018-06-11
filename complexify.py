@@ -149,15 +149,15 @@ def get_unique_neighbours(state):
     return neighbours
 
 def reverse_direction(direction):
-    dirs = {"east":"west","west":"east","south":"north","north":"south"}
+    dirs = {"East":"West","West":"East","South":"North","North":"South"}
     return dirs[direction]
 
 def coordinate_modifier(coord, direction):
-    mod = {"east":(1,0),"west":(-1,0),"south":(0,-1),"north":(0,1)}[direction]
+    mod = {"East":(1,0),"West":(-1,0),"South":(0,-1),"North":(0,1)}[direction]
     return (coord[0]+mod[0],coord[1]+mod[1])
     
 def direction_of_coord(start,end):
-    mod = {(1,0):"east",(-1,0):"west",(0,-1):"south",(0,1):"north"}
+    mod = {(1,0):"East",(-1,0):"West",(0,-1):"South",(0,1):"North"}
     return mod[(end[0]-start[0],end[1]-start[1])]
     
     
@@ -254,19 +254,19 @@ def measure_complexity(state, measure="both"):
 
 
 if __name__ == "__main__":
-    original_state = [('At', 'Library'), ('NextTo', 'Office', 'Library', 'south'), ('NextTo', 'Kitchen', 'Office', 'west'),
-                      ('NextTo', 'Office', 'Kitchen', 'east'), ('NextTo', 'Library', 'Office', 'north'), ]
+    original_state = [('At', 'Library'), ('NextTo', 'Office', 'Library', "South"), ('NextTo', 'Kitchen', 'Office', "West"),
+                      ('NextTo', 'Office', 'Kitchen', "East"), ('NextTo', 'Library', 'Office', "North"), ]
 
 
     count = 0
     state = copy.copy(original_state)
     measure_complexity(original_state,"items")
-    print(measure_complexity([("At", "Kitchen"), ('NextTo', 'Kitchen', 'Office', 'west'),('NextTo', 'Office', 'Kitchen', 'east')], "rooms"))
-    print(measure_complexity([("At", "Kitchen"), ('NextTo', 'Kitchen', 'Office', 'west'),('NextTo', 'Office', 'Kitchen', 'east'),('NextTo', 'Kitchen', 'Library', 'east'),('NextTo', 'Library', 'Kitchen', 'west')], "rooms"))
-    print(measure_complexity([("At", "Kitchen"), ('NextTo', 'Kitchen', 'Office', 'east'),('NextTo', 'Office', 'Kitchen', 'west'),
-                                  ('NextTo', 'Kitchen', 'Library', 'south'),('NextTo', 'Library', 'Kitchen', 'north'),
-                                  ("NextTo", "Office", "Room1", "east"), ("NextTo", "Room1","Office", "west"),
-                                  ("NextTo", "Office", "Room2", "north"), ("NextTo", "Room2", "Office", "south")], "rooms"))
+    print(measure_complexity([("At", "Kitchen"), ('NextTo', 'Kitchen', 'Office', "West"),('NextTo', 'Office', 'Kitchen', "East")], "rooms"))
+    print(measure_complexity([("At", "Kitchen"), ('NextTo', 'Kitchen', 'Office', "West"),('NextTo', 'Office', 'Kitchen', "East"),('NextTo', 'Kitchen', 'Library', "East"),('NextTo', 'Library', 'Kitchen', "West")], "rooms"))
+    print(measure_complexity([("At", "Kitchen"), ('NextTo', 'Kitchen', 'Office', "East"),('NextTo', 'Office', 'Kitchen', "West"),
+                                  ('NextTo', 'Kitchen', 'Library', "South"),('NextTo', 'Library', 'Kitchen', "North"),
+                                  ("NextTo", "Office", "Room1", "East"), ("NextTo", "Room1","Office", "West"),
+                                  ("NextTo", "Office", "Room2", "North"), ("NextTo", "Room2", "Office", "South")], "rooms"))
     while measure_complexity(state,"rooms") < 10:
         try:
             state = add_room(state)

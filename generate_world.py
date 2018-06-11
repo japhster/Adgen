@@ -2,7 +2,7 @@ import copy
 import sys
 
 from actions import all_actions
-from output_plan import save_plan
+from save_plan import save_plan
 from exceptions import SequenceError, SequenceMergeError
 from complexify import complexify, generate_map, get_unique_neighbours, coordinate_modifier
 from visual import visualise_map
@@ -84,10 +84,10 @@ def backtrack(goal_state,actions):
                 #if a condition is not a negation
                 current_state.add(actual_cond) #add it to the current state
             #if a condition is a negation and its positive is not in the current state
-            #nothing changes as this is assumed in the OWA anyway
+            #nothing changes as this is assumed anyway
                 
 
-    #current state must now be an initial state for this solution
+    #current state must now be an initial state for this action sequence
 
     return current_state
 
