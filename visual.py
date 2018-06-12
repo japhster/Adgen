@@ -1,11 +1,14 @@
 import pygame
+import sys
+
+from state_functions import generate_map, get_unique_neighbours,format_state
 
 def visualise_map(room_map,neighbours):
     stop = False
     pygame.init()
     pygame.font.init()
     font = pygame.font.SysFont("monospace",15)
-    screen = pygame.display.set_mode((1000,1000))
+    screen = pygame.display.set_mode((500,500))
     screen.fill((255,255,255))
     #get the minimum values of x and y
     min_x, min_y = min([i[0] for i in room_map.values()]), min([i[1] for i in room_map.values()])
@@ -57,19 +60,7 @@ def visualise_map(room_map,neighbours):
 
     
 if __name__ == "__main__":
-    room_map = {'Room7': (1, -2), 'Room2': (0, -1), 'Library': (0, 0), 'Room5': (1, 1), 'Room8': (0, -2), 'Room3': (2, 0),
-                'Office': (0, 1), 'Room6': (-2, -1), 'Room11': (-1, 0), 'Room1': (1, -1), 'Room10': (3, 0), 'Room9': (1, 2),
-                'Kitchen': (1, 0), 'Room4': (-1, -1)}
-    neighbours = set([('Kitchen', 'Library', "West"), ('Room1', 'Kitchen', "North"), ('Room3', 'Kitchen', "West"),
-                     ('Room4', 'Room2', "East"), ('Room10', 'Room3', "West"), ('Room11', 'Library', "East"),
-                     ('Room6', 'Room4', "East"), ('Room7', 'Room1', "North"), ('Room11', 'Room4', "South"),
-                     ('Room9', 'Room5', "South"), ('Room8', 'Room7', "East"), ('Room2', 'Library', "North"),
-                     ('Room5', 'Kitchen', "South"), ('Library', 'Office', "North"), ('Room8', 'Room2', "North"),
-                     ('Room2', 'Room1', "East"), ('Room5', 'Office', "West")])
-
-    visualise_map(room_map,neighbours)
-    """
-    room_map = {"Room1": (0,0),"Room2": (0,1)}
-    neighbours = set([("Room1", "Room2", "north")])
-    visualise_map(room_map,neighbours)
-    """
+    with open(sys.argv[1], "r") as f:
+        #get first line (remove "initial state: " and split into a list of literals
+        initial_state = format_state(f.readline().strip(), "Initial state: ")
+        visualise_map(generate_map(initial_state), get_unique_neighbours(initial_state))

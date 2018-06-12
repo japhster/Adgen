@@ -4,21 +4,9 @@ import sys
 from actions import all_actions
 from save_plan import save_plan
 from exceptions import SequenceError, SequenceMergeError
-from complexify import complexify, generate_map, get_unique_neighbours, coordinate_modifier
+from complexify import complexify
 from visual import visualise_map
-
-
-def deconstruct_literal(literal):
-    """
-    takes input of a literal in natural form and converts it to a storable tuple
-    e.g.
-    "Neighbour(Room1,Room2)"
-    will be returned as:
-    ("Neighbour","Room1","Room2")
-    """
-    literal = literal.split("(")
-    return_list = tuple([literal[0]] + literal[1][:-1].split(","))
-    return return_list
+from state_functions import deconstruct_literal, generate_map, get_unique_neighbours, coordinate_modifier
 
 def make_actual_condition(action, definition, cond):
     """

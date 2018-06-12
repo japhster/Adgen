@@ -1,5 +1,5 @@
 
-from complexify import reverse_direction
+from state_functions import reverse_direction
 
 #("NextTo","Room1","Room2","east") defines that to get from Room1 to Room2 you must go east
 
@@ -60,6 +60,11 @@ class Action(object):
         for item in self.state:
             if item[0] == "NextTo" and item[1] == self.current_location() and item[2] == self.room:
                 return item[3]
+                       
+    def get_room(self):
+        for item in self.state:
+            if item[0] == "NextTo" and item[1] == self.current_location() and item[3] == self.direction:
+                return item[2]
             
 
 class Move(Action):
@@ -84,11 +89,6 @@ class Unlock(Action):
         self.key = key
         self.action = (self.name, self.current_location(), self.room, self.direction,
                        self.key)
-                       
-    def get_room(self):
-        for item in self.state:
-            if item[0] == "NextTo" and item[1] == self.current_location() and item[3] == self.direction:
-                return item[2]
                 
 class Take(Action):
     
@@ -111,12 +111,13 @@ class Open(Action):
                 
 class ClearDarkness(Action):
     
-    def __init__(self, state, name, room, item):
+    def __init__(self, state, name, direction, item):
         super(ClearDarkness,self).__init__(state,"ClearDarkness")
-        self.room = room.title()
+        self.name = "ClearDarkness"
+        self.direction = direction.title()
+        self.room = self.get_room()
         self.item = item.title()
-        self.action = (self.name, self.current_location(), self.room, self.get_direction(),
-                            reverse_direction(self.get_direction(self.current_location, self.room)), self.item)
+        self.action = (self.name, self.current_location(), self.room, self.direction, reverse_direction(self.direction), self.item)
 
 
 class Talk(Action):

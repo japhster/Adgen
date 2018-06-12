@@ -2,26 +2,46 @@ import sys
 import copy
 import os
 
-from generate_world import deconstruct_literal, make_actual_condition, get_positive_version
+from generate_world import make_actual_condition, get_positive_version
 from actions import all_actions
 from actions import Move, Unlock, Take, Open, ClearDarkness, Talk
+from state_functions import deconstruct_literal, format_state
 
-
-
-def get_items(state, room):        
+def get_items(state, room):
+    """
+    returns a list of items that can be found in the given room
+    """
     return [item[1] for item in state if item[0] == "In" and item[-1] == room]
 
 def get_exits(state, room):
+    """
+    returns a list of exits from the given room
+    """
     return [(item[3], item[2]) for item in state if item[0] == "NextTo" and item[1] == room]
     
 def get_neighbouring_blockages(state,room,blockage):
-    #could be "Lock", "Dark", "HiddenPath"
+    """
+    returns a list of rooms that are connected to the given room who's passage is blocked in some way
+    could be "Lock", "HiddenPath"
+    """
     return [item[2] for item in state if item[0] == blockage and item[1] == room]
 
+def get_dark_neighbours(state,room):
+    """
+    returns a list of darkened rooms connected to the given room
+    """
+    return [item[1] for item in state if item[0] == "Dark"]
+
 def get_inventory(state):
+    """
+    returns a list of items that the character has on them
+    """
     return [item[1] for item in state if item[0] == "Has"]
     
 def action_is_possible(state,preconditions):
+    """
+    tests to see if all the preconditions exist in the state therefore making it possible to perform the action
+    """
     for precond in preconditions:
         #if condition is negative and its positive is in the state the action can't happen
         negative_and_positive_in_state = precond[0][0] == "!" and get_positive_version(precond) in current_state
@@ -33,6 +53,9 @@ def action_is_possible(state,preconditions):
     return True
 
 def perform_action(state,postconditions):
+    """
+    adds all the postconditions to the state (cancelling out conditions when it is negative) therefore having performed the action
+    """
     for postcond in postconditions:
         positive = get_positive_version(postcond)
         if postcond[0][0] == "!" and positive in state:
@@ -41,6 +64,12 @@ def perform_action(state,postconditions):
             state.add(postcond)
 
 def print_state(state):
+    """
+    prints out the information pertaining to the whereabouts of the character
+    - where they are
+    - what items are in the current room
+    - what exits there are from the room (including whether or not they are blocked)
+    """
     for item in state:
         if item[0] == "At":
             location = item[1]
@@ -49,10 +78,11 @@ def print_state(state):
     items = get_items(state,location)
     exits = get_exits(state,location)
     locked_doors = get_neighbouring_blockages(state,location,"Lock")
-    dark_rooms = get_neighbouring_blockages(state,location,"Dark")
+    dark_rooms = get_dark_neighbours(state,location)
+    print(dark_rooms)
     detailed = []
     for room in exits:
-        if room[1] in locked_doors and dark_rooms:
+        if room[1] in locked_doors and room[1] in dark_rooms:
             detailed.append(room[0] + " (Locked, Dark)")
         elif room[1] in locked_doors:
             detailed.append(room[0] + " (Locked)")
@@ -65,6 +95,9 @@ def print_state(state):
     print("There are exits to the: " + ", ".join(sorted(detailed)))
 
 def goal_reached(state,goal_state):
+    """
+    checks to see if the current state contains all the requirements of the goal state
+    """ 
     for item in goal_state:
         if item[0][0] != "!" and item not in state:
             return False
@@ -77,13 +110,9 @@ def goal_reached(state,goal_state):
 if __name__ == "__main__":
     with open(sys.argv[1], "r") as f:
         #capture initial state
-        line = f.readline().strip()[15:].split("),")
-        line[-1] = line[-1][:-1]
-        initial_state = set([deconstruct_literal(literal + ")") for literal in line])
+        initial_state = format_state(f.readline().strip(), "Initial state:")
         #capture goal state
-        line = f.readline().strip()[12:].split("),")
-        line[-1] = line[-1][:-1]
-        goal_state = set([deconstruct_literal(literal + ")") for literal in line])
+        goal_state = format_state(f.readline().strip(), "Goal state:")
         
     current_state = copy.copy(initial_state)
     non_functional_commands = ["inv"]
@@ -117,6 +146,7 @@ if __name__ == "__main__":
                 error = "Sorry, I don't understand the command: {0}.".format(e)
         except TypeError as e:
             action = None
+            print(e)
             error = "That command is missing a {0}".format(str(e).split()[-1])
         if action:
             definition = all_actions[action[0]]
