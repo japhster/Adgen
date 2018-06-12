@@ -150,7 +150,11 @@ def get_unique_neighbours(state):
 
 def reverse_direction(direction):
     dirs = {"East":"West","West":"East","South":"North","North":"South"}
-    return dirs[direction]
+    try:
+        return dirs[direction]
+    except KeyError as e:
+        print("{0} is not a direction.".format(e))
+        return None
 
 def coordinate_modifier(coord, direction):
     mod = {"East":(1,0),"West":(-1,0),"South":(0,-1),"North":(0,1)}[direction]

@@ -77,12 +77,18 @@ class Move(Action):
                 
 class Unlock(Action):
     
-    def __init__(self, state, name, room, key):
+    def __init__(self, state, name, direction, key):
         super(Unlock,self).__init__(state,name)
-        self.room = room.title()
+        self.direction = direction.title()
+        self.room = self.get_room()
         self.key = key
-        self.action = (self.name, self.current_location(), self.room, self.get_direction(self.current_location(),self.room),
-                            self.key)
+        self.action = (self.name, self.current_location(), self.room, self.direction,
+                       self.key)
+                       
+    def get_room(self):
+        for item in self.state:
+            if item[0] == "NextTo" and item[1] == self.current_location() and item[3] == self.direction:
+                return item[2]
                 
 class Take(Action):
     

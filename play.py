@@ -14,15 +14,20 @@ def get_items(state, room):
 def get_exits(state, room):
     return [(item[3], item[2]) for item in state if item[0] == "NextTo" and item[1] == room]
     
-def get_locked_doors(state,room):
-    pass
+def get_neighbouring_blockages(state,room,blockage):
+    #could be "Lock", "Dark", "HiddenPath"
+    return [item[2] for item in state if item[0] == blockage and item[1] == room]
+
+def get_inventory(state):
+    return [item[1] for item in state if item[0] == "Has"]
     
 def action_is_possible(state,preconditions):
     for precond in preconditions:
         #if condition is negative and its positive is in the state the action can't happen
+        negative_and_positive_in_state = precond[0][0] == "!" and get_positive_version(precond) in current_state
         #if condition is positive and is not in the state the action can't happen
-        if (precond[0][0] == "!" and get_positive_version(precond) in current_state) or (precond[0][0] != "!" and precond not in current_state):
-            print(precond)
+        positive_and_not_in_state = precond[0][0] != "!" and precond not in current_state
+        if negative_and_positive_in_state or positive_and_not_in_state:
             return False
             
     return True
@@ -43,11 +48,21 @@ def print_state(state):
 
     items = get_items(state,location)
     exits = get_exits(state,location)
-    locked_doors = []
-
+    locked_doors = get_neighbouring_blockages(state,location,"Lock")
+    dark_rooms = get_neighbouring_blockages(state,location,"Dark")
+    detailed = []
+    for room in exits:
+        if room[1] in locked_doors and dark_rooms:
+            detailed.append(room[0] + " (Locked, Dark)")
+        elif room[1] in locked_doors:
+            detailed.append(room[0] + " (Locked)")
+        elif room[1] in dark_rooms:
+            detailed.append(room[0] + " (Dark)")
+        else:
+            detailed.append(room[0])
     print("You are in a room.")
     print("You can see: " + (", ".join(items) if items else "nothing"))
-    print("You can move: " + ", ".join([exit[0] for exit in exits]))
+    print("There are exits to the: " + ", ".join(sorted(detailed)))
 
 def goal_reached(state,goal_state):
     for item in goal_state:
@@ -71,11 +86,17 @@ if __name__ == "__main__":
         goal_state = set([deconstruct_literal(literal + ")") for literal in line])
         
     current_state = copy.copy(initial_state)
+    non_functional_commands = ["inv"]
     performed = True
     while True:
         os.system("clear")
         if not performed:
-            print("I cannot \"{0}\" at this point in time".format(" ".join(instruction)))
+            if error:
+                print(error)
+            else:
+                print("I cannot \"{0}\" at this point in time".format(" ".join(instruction)))
+        performed = False
+        error = None
         print_state(current_state)
         #get instruction
         instruction = tuple(input(">").split())
@@ -87,19 +108,25 @@ if __name__ == "__main__":
             action = {"move":Move,"unlock":Unlock,"take":Take,
                            "cleardarkness":ClearDarkness,"open":Open,
                            "talk":Talk}[instruction[0].lower()](current_state, *instruction).action
-        except KeyError:
-            print("Sorry, I don't understand that command.")
-        definition = all_actions[action[0]]
-        #check action can be performed
-        preconditions = [make_actual_condition(action,definition,precond) for precond in definition[1]]
-        if action_is_possible(current_state,preconditions):
-            #perform action
-            postconditions = [make_actual_condition(action,definition,postcond) for postcond in definition[2]]
-            perform_action(current_state,postconditions)
-            performed = True
-        else:
-            #action can't be performed so inform player
-            performed = False
+        except KeyError as e:
+            action = None
+            if instruction[0].lower() in non_functional_commands:
+                if instruction[0].lower() == "inv":
+                    error = "You have: " + ", ".join(get_inventory(current_state))
+            else:
+                error = "Sorry, I don't understand the command: {0}.".format(e)
+        except TypeError as e:
+            action = None
+            error = "That command is missing a {0}".format(str(e).split()[-1])
+        if action:
+            definition = all_actions[action[0]]
+            #check action can be performed
+            preconditions = [make_actual_condition(action,definition,precond) for precond in definition[1]]
+            if action_is_possible(current_state,preconditions):
+                #perform action
+                postconditions = [make_actual_condition(action,definition,postcond) for postcond in definition[2]]
+                perform_action(current_state,postconditions)
+                performed = True
         #check if goal state has been reached
         if goal_reached(current_state,goal_state):
             print("You Win!")
