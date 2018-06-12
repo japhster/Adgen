@@ -70,7 +70,7 @@ class Action(object):
 class Move(Action):
 
     def __init__(self, state, name, direction):
-        super(Move,self).__init__(state,name)
+        super(Move,self).__init__(state,"Move")
         self.direction = direction.title()
         self.action = (self.name, self.current_location(),self.get_To(),self.direction,reverse_direction(self.direction))        
     
@@ -83,7 +83,7 @@ class Move(Action):
 class Unlock(Action):
     
     def __init__(self, state, name, direction, key):
-        super(Unlock,self).__init__(state,name)
+        super(Unlock,self).__init__(state,"Unlock")
         self.direction = direction.title()
         self.room = self.get_room()
         self.key = key
@@ -93,14 +93,14 @@ class Unlock(Action):
 class Take(Action):
     
     def __init__(self, state, name, item):
-        super(Take,self).__init__(state,name)
-        self.item = item.title()
+        super(Take,self).__init__(state,"Take")
+        self.item = item
         self.action = (self.name, self.item, self.current_location())
         
 class Open(Action):
 
     def __init__(self, state, name, container):
-        super(Open,self).__init__(state,name)
+        super(Open,self).__init__(state,"Open")
         self.container = container.title()
         self.action = (self.name, self.container, self.get_item())
         
@@ -123,7 +123,7 @@ class ClearDarkness(Action):
 class Talk(Action):
 
     def __init__(self, state, name, person):
-        super(Talk,self).__init__(state,name)
+        super(Talk,self).__init__(state,"Talk")
         self.person = person
         self.person_knows = self.get_person_knows()
         self.direction = self.get_direction(self.person_knows[0], self.person_knows[1])
@@ -140,6 +140,16 @@ class Talk(Action):
             if len(person_knows) == 2:
                return person_knows
 
+
+commands = {
+            Move: ["move","go"],
+            ClearDarkness: ["cleardarkness","clear darkness", "light"],
+            Unlock: ["unlock"],
+            Take: ["take","pick up"],
+            Open: ["open","smash","break"],
+            Talk: ["talk","speak"],
+           }
+            
 
 if __name__ == "__main__":
     print(all_actions["ClearDarkness"])

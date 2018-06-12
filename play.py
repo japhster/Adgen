@@ -3,7 +3,7 @@ import copy
 import os
 
 from generate_world import make_actual_condition, get_positive_version
-from actions import all_actions
+from actions import all_actions, commands
 from actions import Move, Unlock, Take, Open, ClearDarkness, Talk
 from state_functions import deconstruct_literal, format_state
 
@@ -105,7 +105,26 @@ def goal_reached(state,goal_state):
             return False
     
     return True
-    
+
+def parse_input(instruction,commands):
+    #get action
+    action = ""
+    instruction_list = instruction.split()
+    for item in commands.items():
+        for command in item[1]:
+            if command in instruction:
+                action = command
+                for word in command.split():
+                    instruction_list.remove(word)
+                break
+        if action:
+            break
+    #get required arguments
+    parsed = [action]
+    for item in instruction_list:
+        if item not in ["with", "in", "the", "door", "to"]:
+            parsed.append(item)
+    return parsed
 
 if __name__ == "__main__":
     with open(sys.argv[1], "r") as f:
@@ -124,19 +143,20 @@ if __name__ == "__main__":
                 print(error)
             else:
                 print("I cannot \"{0}\" at this point in time".format(" ".join(instruction)))
+                print(action)
         performed = False
         error = None
         print_state(current_state)
         #get instruction
-        instruction = tuple(input(">").split())
-        
-        if not instruction:
+        instruction = input(">")
+        instruction = parse_input(instruction, commands)
+        if not "".join(instruction):
             break
         #get action for instruction
         try:
-            action = {"move":Move,"unlock":Unlock,"take":Take,
-                           "cleardarkness":ClearDarkness,"open":Open,
-                           "talk":Talk}[instruction[0].lower()](current_state, *instruction).action
+            for key,value in commands.items():
+                if instruction[0] in value:
+                    action = key(current_state,*instruction).action
         except KeyError as e:
             action = None
             if instruction[0].lower() in non_functional_commands:
