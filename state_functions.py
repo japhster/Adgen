@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 
 def get_unique_neighbours(state):
     """
@@ -79,4 +81,52 @@ def reverse_direction(direction):
     except KeyError as e:
         print("{0} is not a direction.".format(e))
         return None
+
+def get_details(state):
+    """
+    returns a dictionary of details mapping the type of interactable object to a list of objects in the world of that type.
+    types include:
+     - keys
+     - containers
+     - lightsources
+     - items (including all of the above)
+     - people
+     - directions
+    """
+    details = defaultdict(set)
+    details["directions"] = {"north","east","south","west"}
+    for item in state:
+        if item[0] == "LockNeeds":
+            details["keys"].add(item[3])
+        elif item[0] == "Openable":
+            details["containers"].add(item[1])
+        elif item[0] == "Purpose" and item[2] == "Light":
+            details["lightsources"].add(item[1])
+        elif item[0] == "Knows":
+            details["people"].add(item[1])
+        elif item[0] == "In":
+            is_item = True
+            for jtem in state:
+                if jtem[0] == "Knows" and item[1] in jtem:
+                    is_item = False
+                    break
+            if is_item:
+                details["items"].add(item[1])
+        elif item[0] == "Contains":
+            details["item"].add(item[2])
+    print(details)
+    return details
+
+
+
+
+
+
+
+
+
+
+
+
+
 

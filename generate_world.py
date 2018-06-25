@@ -6,7 +6,7 @@ from save_plan import save_plan
 from exceptions import SequenceError, SequenceMergeError
 from complexify import complexify
 from visual import visualise_map
-from state_functions import deconstruct_literal, generate_map, get_unique_neighbours, coordinate_modifier
+from state_functions import deconstruct_literal, generate_map, get_unique_neighbours, coordinate_modifier, get_details
 
 def make_actual_condition(action, definition, cond):
     """
@@ -102,9 +102,10 @@ if __name__ == "__main__":
     """
     args:
     filename of input file
-    followed by filename of output file 
+    followed by the name to save the game under (used to retrieve the game later on) 
     """
     filename = sys.argv[1]
+    gamename = " ".join(sys.argv[2:]).title()
     with open(filename, "r") as f:
         line = f.readline().strip()
         #capture goal state (line 1)
@@ -128,7 +129,8 @@ if __name__ == "__main__":
     #save the planning problem to a file with the name of the second filename given on command line
     print("Initial State:")
     print(initial_state)
-    save_plan(list(initial_state),list(goal_state),list(all_actions.values()),sys.argv[2])
+    details = get_details(initial_state)
+    save_plan(list(initial_state),list(goal_state),list(all_actions.values()),gamename,details)
     visualise_map(generate_map(initial_state),get_unique_neighbours(initial_state))
-    print("Plan has been saved to {0}".format(sys.argv[2]))
+    print("Plan has been saved under the name \"{0}\"".format(gamename))
         

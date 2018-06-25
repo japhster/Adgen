@@ -1,11 +1,22 @@
 import sys
 import copy
 import os
+import string
+import json
 
 from generate_world import make_actual_condition, get_positive_version
-from actions import all_actions, commands
+from actions import all_actions, actions, commands, requirements
 from actions import Move, Unlock, Take, Open, ClearDarkness, Talk
 from state_functions import deconstruct_literal, format_state
+
+
+class World(object):
+    
+    def __init__(self,details):
+        self.details = details
+        
+    def fill_in_assumptions(self):
+        self.items = self.items + self.keys + self.containers
 
 def get_items(state, room):
     """
@@ -74,12 +85,11 @@ def print_state(state):
         if item[0] == "At":
             location = item[1]
             break
-
+    inv = get_inventory(state)
     items = get_items(state,location)
     exits = get_exits(state,location)
     locked_doors = get_neighbouring_blockages(state,location,"Lock")
     dark_rooms = get_dark_neighbours(state,location)
-    print(dark_rooms)
     detailed = []
     for room in exits:
         if room[1] in locked_doors and room[1] in dark_rooms:
@@ -91,6 +101,7 @@ def print_state(state):
         else:
             detailed.append(room[0])
     print("You are in a room.")
+    print("You have: " + (", ".join(inv) if inv else "nothing"))
     print("You can see: " + (", ".join(items) if items else "nothing"))
     print("There are exits to the: " + ", ".join(sorted(detailed)))
 
@@ -106,68 +117,98 @@ def goal_reached(state,goal_state):
     
     return True
 
-def parse_input(instruction,commands):
+def parse_input(instruction,actions,commands,requirements,world):
+    #remove punctuation
+    exclude = set(string.punctuation)
+    instruction = "".join(ch for ch in instruction if ch not in exclude)
     #get action
-    action = ""
-    instruction_list = instruction.split()
-    for item in commands.items():
-        for command in item[1]:
-            if command in instruction:
-                action = command
-                for word in command.split():
-                    instruction_list.remove(word)
+    action = None
+    instruction = instruction.split()
+    for name,options in commands.items():
+        for option in options:
+            if set(option.split()).issubset(set(instruction)):
+                action = name
                 break
         if action:
             break
     #get required arguments
-    parsed = [action]
-    for item in instruction_list:
-        if item not in ["with", "in", "the", "door", "to"]:
-            parsed.append(item)
+    if action:
+        parsed = [action]
+        #for each thing required by the action found
+        for requirement in requirements[action]:
+            #check if a defined item in details.txt is in the instruction and add it to parsed if it is
+            found = False
+            for item in world.details[requirement+"s"]:
+                #print(set(item.lower().split()),set(instruction))
+                if set(item.lower().split()).issubset(set(instruction)):
+                    parsed.append(item)
+                    found = True
+                    break
+            if not found:
+                return "I need a{0} {1} to perform that action.".format("n" if requirement[0] in "aeiou" else "",requirement)
+    else:
+        return instruction     
+    
     return parsed
 
 if __name__ == "__main__":
-    with open(sys.argv[1], "r") as f:
+    """
+    takes argument of the name of the adventure
+    """
+    adventure = "Games/" + " ".join(sys.argv[1:]).title()
+    world_path = adventure + "/world.txt"
+    details_path = adventure + "/details.json"
+    with open(world_path, "r") as f:
         #capture initial state
         initial_state = format_state(f.readline().strip(), "Initial state:")
         #capture goal state
         goal_state = format_state(f.readline().strip(), "Goal state:")
+        with open(details_path,"r") as f:
+            #this file is for details
+            #defines what type anything in the world is
+            details = json.load(f)
+        world = World(details)
+            
         
     current_state = copy.copy(initial_state)
     non_functional_commands = ["inv"]
     performed = True
+    response = None
     while True:
         os.system("clear")
-        if not performed:
-            if error:
-                print(error)
-            else:
-                print("I cannot \"{0}\" at this point in time".format(" ".join(instruction)))
-                print(action)
+        if response:
+            print(response)
         performed = False
-        error = None
+        response = None
+        action = None
         print_state(current_state)
         #get instruction
         instruction = input(">")
-        instruction = parse_input(instruction, commands)
+        real_instruction = parse_input(instruction, actions, commands, requirements, world)
+        if type(real_instruction) != list:
+            #action was missing a requirement
+            response = real_instruction
         if not "".join(instruction):
-            break
+            quit = input("Do you really want to quit (Y/n)?")
+            if quit.lower() in ["","y","yes"]:
+                break
         #get action for instruction
-        try:
-            for key,value in commands.items():
-                if instruction[0] in value:
-                    action = key(current_state,*instruction).action
-        except KeyError as e:
-            action = None
-            if instruction[0].lower() in non_functional_commands:
-                if instruction[0].lower() == "inv":
-                    error = "You have: " + ", ".join(get_inventory(current_state))
-            else:
-                error = "Sorry, I don't understand the command: {0}.".format(e)
-        except TypeError as e:
-            action = None
-            print(e)
-            error = "That command is missing a {0}".format(str(e).split()[-1])
+        if not response:
+            for key,value in actions.items():
+                if real_instruction[0] == key:
+                    try:
+                        action = value(current_state,*real_instruction).action
+                        print(action)
+                        response = "You {0}".format(instruction)
+                    except TypeError:
+                        response = "Sorry, I couldn't \"{0}\"".format(instruction)
+            #if no action so far then check in non_functional_commands
+            if not action and real_instruction[0].lower() in non_functional_commands:
+                if real_instruction[0].lower() == "inv":
+                    response = "You have: " + ", ".join(get_inventory(current_state))
+            elif not action:
+                response = "Sorry, I don't understand the command \"{0}\".".format(instruction) 
+
         if action:
             definition = all_actions[action[0]]
             #check action can be performed
@@ -177,6 +218,8 @@ if __name__ == "__main__":
                 postconditions = [make_actual_condition(action,definition,postcond) for postcond in definition[2]]
                 perform_action(current_state,postconditions)
                 performed = True
+            else:
+                response = "Sorry, I can't \"{0}\" at this point in time".format(instruction)
         #check if goal state has been reached
         if goal_reached(current_state,goal_state):
             print("You Win!")

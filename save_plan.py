@@ -1,3 +1,7 @@
+import os
+import json
+from collections import defaultdict
+
 from actions import all_actions
 
 def print_actions(actions, filename):
@@ -49,8 +53,23 @@ def concatenate_literals(items):
     return return_string
         
         
-def save_plan(initial, goal, actions, filename):
-    with open(filename, "w") as f:
+def save_plan(initial, goal, actions, directoryname, details):
+    folder = False
+    folderpath = "Games/" + directoryname
+    while not folder:
+        if not os.path.exists(folderpath):
+            os.makedirs(folderpath)
+            folder = True
+        else:
+            carry_on = input("A game with the name \"{0}\" already exists, would you like to overwrite this game (Y/n)?".format(directoryname))
+            if not carry_on.lower() in ("", "y", "yes"):
+                print("cool")
+                directoryname = input("What name would you like to give your game?")
+            else:
+                folder = True
+    outputpathname = "Games/" + directoryname + "/world.txt"
+    detailspathname = "Games/" + directoryname + "/details.json"
+    with open(outputpathname, "w+") as f:
         #print the initial state of the game world
         f.write("Initial state: ")
         f.write(concatenate_literals(initial) + "\n")
@@ -58,7 +77,13 @@ def save_plan(initial, goal, actions, filename):
         f.write("Goal state: ")
         f.write(concatenate_literals(goal) + "\n")     
     #print the actions of the game world
-    print_actions(actions, filename)
+    print_actions(actions, outputpathname)
+    
+    with open(detailspathname,"w+") as f:
+        to_write = defaultdict(list)
+        for key,value in details.items():
+            to_write[key] = list(value)
+        json.dump(to_write,f)
         
 if __name__ == "__main__":
     initial = [("At","Room1"), ("NextTo","Room1","Room2"), ("NextTo","Room2","Room1"), ("Lock","Room1","Room2"), ("Lock","Room2","Room1"), ("In","Key","Room1")]

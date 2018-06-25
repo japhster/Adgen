@@ -24,6 +24,11 @@ all_actions = {
                     (("At","Room"), ("In","Item","Room"),("!Has","Item")),
                     (("Has","Item"), ("!In","Item","Room"))
                    ),
+           "Drop": (
+                    ("Drop","Item","Room"),
+                    (("At","Room"),("Has","Item"),("!In","Item","Room")),
+                    (("!Has","Item"),("In","Item","Room"))
+                   ),
            "Open": (
                     ("Open","Container","Item"),
                     (("Has","Container"),("Openable","Container"),("Contains","Container","Item"),("!Has","Item")),
@@ -43,6 +48,11 @@ all_actions = {
                      ("NextTo","Room1","Room2","Direction12"),("NextTo","Room2","Room1","Direction21")),
                     (("!HiddenPath","Room1","Room2"),("!HiddenPath","Room2","Room1"))
                    ),
+           "CheatGain": (
+                         ("CheatGain","Item"),
+                         (("!Has","Item"),),
+                         (("Has","Item"),)
+                        )
           }
           
 class Action(object):
@@ -97,6 +107,13 @@ class Take(Action):
         self.item = item
         self.action = (self.name, self.item, self.current_location())
         
+class Drop(Action):
+
+    def __init__(self, state, name, item):
+        super(Drop,self).__init__(state,"Drop")
+        self.item = item
+        self.action = (self.name, self.item, self.current_location())
+        
 class Open(Action):
 
     def __init__(self, state, name, container):
@@ -112,7 +129,7 @@ class Open(Action):
 class ClearDarkness(Action):
     
     def __init__(self, state, name, direction, item):
-        super(ClearDarkness,self).__init__(state,"ClearDarkness")
+        super(ClearDarkness,self).__init__(state,"irrelevant")
         self.name = "ClearDarkness"
         self.direction = direction.title()
         self.room = self.get_room()
@@ -140,16 +157,47 @@ class Talk(Action):
             if len(person_knows) == 2:
                return person_knows
 
+class CheatGain(Action):
+    
+    def __init__(self, state, name, item):
+        super(CheatGain,self).__init__(state,"irrelevant")
+        self.name = "CheatGain"
+        self.item = item
+        self.action = (self.name, self.item)
+
+actions = {
+           "move":Move,
+           "clear darkness": ClearDarkness,
+           "unlock": Unlock,
+           "take": Take,
+           "drop": Drop,
+           "open": Open,
+           "talk": Talk,
+           "cheat gain": CheatGain,
+          }
 
 commands = {
-            Move: ["move","go"],
-            ClearDarkness: ["cleardarkness","clear darkness", "light"],
-            Unlock: ["unlock"],
-            Take: ["take","pick up"],
-            Open: ["open","smash","break"],
-            Talk: ["talk","speak"],
+            "move": ["move","go"],
+            "clear darkness": ["cleardarkness","clear darkness", "light"],
+            "unlock": ["unlock"],
+            "take": ["take","pick up","get","acquire"],
+            "drop": ["drop","let go of"],
+            "open": ["open","smash","break"],
+            "talk": ["talk","speak"],
            }
-            
+           
+commands["cheat gain"] = ["reach into the nethersphere and " + item for item in commands["take"]]
+
+requirements = {
+                "move": ["direction"],
+                "unlock": ["direction","key"],
+                "take": ["item"],
+                "drop": ["item"],
+                "open": ["container"],
+                "clear darkness": ["direction","item"],
+                "talk": ["person"],
+                "cheat gain": ["item"],
+               }
 
 if __name__ == "__main__":
     print(all_actions["ClearDarkness"])

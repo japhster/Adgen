@@ -5,6 +5,17 @@ import random
 
 from state_functions import get_unique_neighbours, generate_map, reverse_direction, direction_of_coord
 
+"""
+rewrite algorithm steps:
+ - add room
+ - random chance that a key will be placed (.1)
+ - generate connections
+ - for each door random chance that the door will be locked (.2)
+   - random key (that already exists in the world) required to open the door
+ - random chance that (if it is not already placed) a torch is placed (.005)
+ - random chance that (if a torch exists in the world) the generated room is made dark
+"""
+
 def complexify(initial_state, goal_state, room_complexity=10, item_complexity=10):
     initial_complexity = measure_complexity(initial_state,"both")
     #print(initial_complexity)

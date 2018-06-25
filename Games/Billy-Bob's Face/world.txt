@@ -1,0 +1,29 @@
+Initial state: NextTo(Office,Kitchen,North),Openable(Box),NextTo(Bedroom,Office,West),NextTo(Office,Bedroom,East),NextTo(Office,Library,South),Contains(Box,Red Key),NextTo(Library,Office,North),In(Box,Library),In(Torch,Bedroom),NextTo(Kitchen,Office,South),Dark(Kitchen),Lock(Office,Library),LockNeeds(Library,Office,Red Key),At(Library),LockNeeds(Office,Library,Red Key),Lock(Library,Office),Purpose(Torch,Light),In(Book,Kitchen),NextTo(Room1,Office,East),NextTo(Office,Room1,West),NextTo(Room2,Kitchen,East),NextTo(Kitchen,Room2,West),NextTo(Room3,Bedroom,South),NextTo(Bedroom,Room3,North),NextTo(Room3,Kitchen,West),NextTo(Kitchen,Room3,East),NextTo(Room4,Room3,West),NextTo(Room3,Room4,East),NextTo(Room5,Room1,North),NextTo(Room1,Room5,South),NextTo(Room6,Room1,East),NextTo(Room1,Room6,West),NextTo(Room7,Room3,South),NextTo(Room3,Room7,North),NextTo(Room8,Room7,South),NextTo(Room7,Room8,North),NextTo(Room9,Room4,South),NextTo(Room4,Room9,North),NextTo(Room9,Room7,West),NextTo(Room7,Room9,East),NextTo(Room10,Kitchen,South),NextTo(Kitchen,Room10,North),NextTo(Room11,Room4,West),NextTo(Room4,Room11,East)
+Goal state: Has(Book),At(Library)
+
+Actions:
+
+Talk(Person,PersonLocation,Room1,Room2,Direction12,Direction21)
+Preconditions:Knows(Person,Room1),Knows(Person,Room2),HiddenPath(Room1,Room2),HiddenPath(Room2,Room1),In(Person,PersonLocation),At(PersonLocation),NextTo(Room1,Room2,Direction12),NextTo(Room2,Room1,Direction21)
+Postconditions:!HiddenPath(Room1,Room2),!HiddenPath(Room2,Room1)
+
+Open(Container,Item)
+Preconditions:Has(Container),Openable(Container),Contains(Container,Item),!Has(Item)
+Postconditions:!Has(Container),Has(Item)
+
+Unlock(Current,Neighbour,Direction,Key)
+Preconditions:At(Current),!At(Neighbour),NextTo(Current,Neighbour,Direction),Has(Key),Lock(Current,Neighbour),Lock(Neighbour,Current),LockNeeds(Neighbour,Current,Key),LockNeeds(Current,Neighbour,Key)
+Postconditions:!Lock(Current,Neighbour),!Lock(Neighbour,Current),!LockNeeds(Neighbour,Current,Key),!LockNeeds(Current,Neighbour,Key)
+
+ClearDarkness(From,To,DirectionFT,DirectionTF,Item)
+Preconditions:Has(Item),At(From),Purpose(Item,Light),Dark(To),NextTo(From,To,DirectionFT),NextTo(To,From,DirectionTF),!Lock(From,To),!Lock(To,From)
+Postconditions:!Dark(To)
+
+Move(From,To,DirectionFT,DirectionTF)
+Preconditions:At(From),!At(To),NextTo(From,To,DirectionFT),NextTo(To,From,DirectionTF),!Lock(From,To),!Dark(To),!HiddenPath(To,From)
+Postconditions:At(To),!At(From)
+
+Take(Item,Room)
+Preconditions:At(Room),In(Item,Room),!Has(Item)
+Postconditions:Has(Item),!In(Item,Room)
+
