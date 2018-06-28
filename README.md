@@ -1,3 +1,5 @@
+#Text-based Adventure Game Generator (Adgen)
+
 To generate a text-based adventure game world run generate_world.py with two arguments:
 first argument: the name of the file that stores the goal state and action sequences
 second argument: a name of the adventure that will be generated (used later to retrieve the game)
