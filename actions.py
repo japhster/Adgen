@@ -60,20 +60,16 @@ class Action(object):
     def __init__(self,state,name):
         self.state = state
         self.name = name.title()
-    
-    def current_location(self):
-        for item in self.state:
-            if item[0] == "At":
-                return item[1]
+        self.current_location = [item[1] for item in self.state if item[0] == "At"][0]
                 
     def get_direction(self, room1, room2):
         for item in self.state:
-            if item[0] == "NextTo" and item[1] == self.current_location() and item[2] == self.room:
+            if item[0] == "NextTo" and item[1] == self.current_location and item[2] == self.room:
                 return item[3]
                        
     def get_room(self):
         for item in self.state:
-            if item[0] == "NextTo" and item[1] == self.current_location() and item[3] == self.direction:
+            if item[0] == "NextTo" and item[1] == self.current_location and item[3] == self.direction:
                 return item[2]
             
 
@@ -82,11 +78,11 @@ class Move(Action):
     def __init__(self, state, name, direction):
         super(Move,self).__init__(state,"Move")
         self.direction = direction.title()
-        self.action = (self.name, self.current_location(),self.get_To(),self.direction,reverse_direction(self.direction))        
+        self.action = (self.name, self.current_location,self.get_To(),self.direction,reverse_direction(self.direction))        
     
     def get_To(self):
         for item in self.state:
-            if item[0] == "NextTo" and item[1] == self.current_location() and item[3] == self.direction:
+            if item[0] == "NextTo" and item[1] == self.current_location and item[3] == self.direction:
                 return item[2]
                 
                 
@@ -97,7 +93,7 @@ class Unlock(Action):
         self.direction = direction.title()
         self.room = self.get_room()
         self.key = key
-        self.action = (self.name, self.current_location(), self.room, self.direction,
+        self.action = (self.name, self.current_location, self.room, self.direction,
                        self.key)
                 
 class Take(Action):
@@ -105,14 +101,14 @@ class Take(Action):
     def __init__(self, state, name, item):
         super(Take,self).__init__(state,"Take")
         self.item = item
-        self.action = (self.name, self.item, self.current_location())
+        self.action = (self.name, self.item, self.current_location)
         
 class Drop(Action):
 
     def __init__(self, state, name, item):
         super(Drop,self).__init__(state,"Drop")
         self.item = item
-        self.action = (self.name, self.item, self.current_location())
+        self.action = (self.name, self.item, self.current_location)
         
 class Open(Action):
 
@@ -132,9 +128,10 @@ class ClearDarkness(Action):
         super(ClearDarkness,self).__init__(state,"irrelevant")
         self.name = "ClearDarkness"
         self.direction = direction.title()
-        self.room = self.get_room()
+        self.room_from = self.current_location
+        self.room_to = self.get_room()
         self.item = item.title()
-        self.action = (self.name, self.current_location(), self.room, self.direction, reverse_direction(self.direction), self.item)
+        self.action = (self.name, self.room_from, self.room_to, self.direction, reverse_direction(self.direction), self.item)
 
 
 class Talk(Action):
@@ -178,7 +175,7 @@ actions = {
 
 commands = {
             "move": ["move","go"],
-            "clear darkness": ["cleardarkness","clear darkness", "light"],
+            "clear darkness": ["cleardarkness","clear darkness","light","shine"],
             "unlock": ["unlock"],
             "take": ["take","pick up","get","acquire"],
             "drop": ["drop","let go of"],

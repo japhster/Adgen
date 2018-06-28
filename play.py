@@ -49,19 +49,21 @@ def get_inventory(state):
     """
     return [item[1] for item in state if item[0] == "Has"]
     
-def action_is_possible(state,preconditions):
+def get_conflicts_with_action(state,preconditions):
     """
     tests to see if all the preconditions exist in the state therefore making it possible to perform the action
+    returns a set of all conflicting precondition or an empty set if there are no conflicting preconditions
     """
+    conflicts = set()
     for precond in preconditions:
         #if condition is negative and its positive is in the state the action can't happen
         negative_and_positive_in_state = precond[0][0] == "!" and get_positive_version(precond) in current_state
         #if condition is positive and is not in the state the action can't happen
         positive_and_not_in_state = precond[0][0] != "!" and precond not in current_state
         if negative_and_positive_in_state or positive_and_not_in_state:
-            return False
+            conflicts.add(precond[0])
             
-    return True
+    return conflicts
 
 def perform_action(state,postconditions):
     """
@@ -151,6 +153,62 @@ def parse_input(instruction,actions,commands,requirements,world):
     
     return parsed
 
+def perform_pre_actions(state,all_actions,conflicts,move_action):
+    """
+    is used when a move command is given with a lock on a door or the room being moved to is dark
+    will attempt to perform all the necessary actions leading up to the action, and return if it was successful or not
+    """
+    if "!Lock" in conflicts:
+        pass
+        #build unlock action from scratch
+         #needs a direction and a key
+        print(move_action)
+        #find the key required for the action
+        for item in state:
+            if item[0] == "LockNeeds" and item == ("LockNeeds",move_action[1],move_action[2],item[3]):
+                key = item[3]
+                break
+        instruction = ["Unlock",move_action[3],key]
+        action = actions["unlock"](current_state,*instruction).action
+        definition = all_actions[action[0]]
+        #check the action can be performed
+        unlock_preconds = [make_actual_condition(action,definition,precond) for precond in definition[1]]
+        conflicts = get_conflicts_with_action(state,unlock_preconds)
+        if conflicts:
+            #if it can't perform the action return False
+            print("lock: {0}".format(conflicts))
+            return False
+        unlock_postconds = [make_actual_condition(action,definition,postcond) for postcond in definition[2]]
+        #perform the action
+        perform_action(state,unlock_postconds)
+
+    if "!Dark" in conflicts:
+        pass
+        #build cleardarkness action from scratch
+        #find all light sources in the world and check if the player has any of them
+        #if it doesn't find one the player has then that is okay, it will fail on the next step
+        for item in state:
+            if item[0] == "Purpose" and item[2] == "Light":
+                light_source = item[1]
+                #check the player has the light source
+                if ("Has",light_source) in state:
+                    #can jump out early knowing the player has this light source
+                    break
+        instruction = ["ClearDarkness",move_action[3],light_source]
+        action = actions["clear darkness"](current_state,*instruction).action
+        definition = all_actions[action[0]]
+        #check the action can be performed
+        light_preconds = [make_actual_condition(action,definition,precond) for precond in definition[1]]
+        conflicts = get_conflicts_with_action(state,light_preconds)
+        if conflicts:
+            #if it can't perform the action return False
+            print("dark: {0}".format(conflicts))
+            return False
+        light_postconds = [make_actual_condition(action,definition,postcond) for postcond in definition[2]]
+        perform_action(state,light_postconds)
+        
+    return True
+
 if __name__ == "__main__":
     """
     takes argument of the name of the adventure
@@ -165,17 +223,22 @@ if __name__ == "__main__":
         goal_state = format_state(f.readline().strip(), "Goal state:")
         with open(details_path,"r") as f:
             #this file is for details
-            #defines what type anything in the world is
+            #defines what type of object anything in the world is
             details = json.load(f)
         world = World(details)
             
         
     current_state = copy.copy(initial_state)
     non_functional_commands = ["inv"]
+    multi_action_commands = ["Move"]
     performed = True
     response = None
     while True:
         os.system("clear")
+        #check if goal state has been reached
+        if goal_reached(current_state,goal_state):
+            print("You Win!")
+            break
         if response:
             print(response)
         performed = False
@@ -194,14 +257,12 @@ if __name__ == "__main__":
                 break
         #get action for instruction
         if not response:
-            for key,value in actions.items():
-                if real_instruction[0] == key:
-                    try:
-                        action = value(current_state,*real_instruction).action
-                        print(action)
-                        response = "You {0}".format(instruction)
-                    except TypeError:
-                        response = "Sorry, I couldn't \"{0}\"".format(instruction)
+            try:
+                action = actions[real_instruction[0]](current_state,*real_instruction).action
+                print(action)
+                response = "You {0}".format(instruction)
+            except TypeError:
+                response = "Sorry, I couldn't \"{0}\"".format(instruction)
             #if no action so far then check in non_functional_commands
             if not action and real_instruction[0].lower() in non_functional_commands:
                 if real_instruction[0].lower() == "inv":
@@ -213,17 +274,21 @@ if __name__ == "__main__":
             definition = all_actions[action[0]]
             #check action can be performed
             preconditions = [make_actual_condition(action,definition,precond) for precond in definition[1]]
-            if action_is_possible(current_state,preconditions):
-                #perform action
-                postconditions = [make_actual_condition(action,definition,postcond) for postcond in definition[2]]
-                perform_action(current_state,postconditions)
-                performed = True
-            else:
-                response = "Sorry, I can't \"{0}\" at this point in time".format(instruction)
-        #check if goal state has been reached
-        if goal_reached(current_state,goal_state):
-            print("You Win!")
-            break
+            while not performed:
+                conflicts = get_conflicts_with_action(current_state,preconditions)
+                if  conflicts == set():
+                    #perform action
+                    postconditions = [make_actual_condition(action,definition,postcond) for postcond in definition[2]]
+                    perform_action(current_state,postconditions)
+                    performed = True
+                elif action[0] in multi_action_commands and conflicts.issubset({"!Lock","!Dark"}):
+                    if not perform_pre_actions(current_state,all_actions,conflicts,action):
+                        response = "Sorry, I can't \"{0}\" at this point in time".format(instruction)
+                        break
+                else:
+                    print(conflicts)
+                    response = "Sorry, I can't \"{0}\" at this point in time".format(instruction)
+                    break
         
             
         
