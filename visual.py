@@ -3,7 +3,7 @@ import sys
 
 from state_functions import generate_map, get_unique_neighbours,format_state
 
-def visualise_map(room_map,neighbours):
+def visualise_map(room_map,neighbours,gamename):
     stop = False
     pygame.init()
     pygame.font.init()
@@ -49,6 +49,7 @@ def visualise_map(room_map,neighbours):
         world_end = (end[0]*multiplier_x+center_offset[0]*multipliers[2],500-(end[1]*multiplier_y+center_offset[1]*multipliers[3]))
         pygame.draw.line(screen, (0,0,0), world_start, world_end, 10)
     
+    pygame.image.save(screen, "Games/" + gamename + "/map.jpeg")
     #display the world until either escape is pressed or the window is closed
     while not stop:
         pygame.display.update()

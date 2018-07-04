@@ -131,6 +131,6 @@ if __name__ == "__main__":
     print(initial_state)
     details = get_details(initial_state)
     save_plan(list(initial_state),list(goal_state),list(all_actions.values()),gamename,details)
-    visualise_map(generate_map(initial_state),get_unique_neighbours(initial_state))
+    visualise_map(generate_map(initial_state),get_unique_neighbours(initial_state),gamename)
     print("Plan has been saved under the name \"{0}\"".format(gamename))
         
