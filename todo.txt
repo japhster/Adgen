@@ -1,3 +1,6 @@
 add extra ways of talking to npcs to unlock more information
 
 introduce monsters to fight, weapons, armour, hit points, experience, character saving, etc.
+when creating an adventure the user needs to specify:
+    - exp received on completion of the adventure
+    - monster exp, hit points and damage (could all be ranges or prespecified and user picks from a list)

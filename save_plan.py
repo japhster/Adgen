@@ -57,13 +57,13 @@ def save_plan(initial, goal, actions, directoryname, details):
     folderpath = "Games/" + directoryname
     if not os.path.exists(folderpath):
         os.makedirs(folderpath)
+    else:
+        carry_on = input("A game with the name \"{0}\" already exists, would you like to overwrite this game (Y/n)?".format(directoryname))
+        if not carry_on.lower() in ("", "y", "yes"):
+            print("cool")
+            directoryname = input("What name would you like to give your game?")
         else:
-            carry_on = input("A game with the name \"{0}\" already exists, would you like to overwrite this game (Y/n)?".format(directoryname))
-            if not carry_on.lower() in ("", "y", "yes"):
-                print("cool")
-                directoryname = input("What name would you like to give your game?")
-            else:
-                folder = True
+            folder = True
     outputpathname = "Games/" + directoryname + "/world.txt"
     detailspathname = "Games/" + directoryname + "/details.json"
     with open(outputpathname, "w+") as f:

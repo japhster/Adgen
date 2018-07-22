@@ -3,11 +3,13 @@ import copy
 import os
 import string
 import json
+import time
 
 from generate_world import make_actual_condition, get_positive_version
 from actions import all_actions, actions, commands, requirements
 from actions import Move, Unlock, Take, Open, ClearDarkness, Talk
 from state_functions import deconstruct_literal, format_state
+from character import load_character
 
 
 class World(object):
@@ -211,6 +213,16 @@ def perform_pre_actions(state,all_actions,conflicts,move_action):
         
     return True
 
+def loading_screen(character):
+    extra = ""
+    for i in range(5):
+        os.system("clear")
+        print("character found:\n" + character.get_details())
+        print("Loading game" + extra)
+        time.sleep(0.5)
+        extra += "."
+    print()
+
 if __name__ == "__main__":
     """
     takes argument of the name of the adventure
@@ -218,6 +230,7 @@ if __name__ == "__main__":
     adventure = "Games/" + " ".join(sys.argv[1:]).title()
     world_path = adventure + "/world.txt"
     details_path = adventure + "/details.json"
+    #LOAD ADVENTURE
     with open(world_path, "r") as f:
         #capture initial state
         initial_state = format_state(f.readline().strip(), "Initial state:")
@@ -228,8 +241,26 @@ if __name__ == "__main__":
             #defines what type of object anything in the world is
             details = json.load(f)
         world = World(details)
-            
+    #LOAD CHARACTER
+    print("1) New Character\n2) Load Character\n3) Play Without A Character")
+    option = input(">").lower()
+    if option =="1" or "new" in option:
+        pass
+    if option == "2" or "load" in option:
+        character = None
+        while not character:
+            character = load_character(input("Enter the name of your existing character (leave blank to return to the menu):\n"))
+            if not character:
+                with open("Characters/characters.txt") as f:
+                    characters = f.readlines().strip()
+                    print(characters)
+                    print("Existing characters are:\n{0}".format("\n".join(characters)))
+    if option == "3" or "play" in option:
+        pass
         
+    loading_screen(character)
+        
+    #PLAY GAME
     current_state = copy.copy(initial_state)
     non_functional_commands = ["inv"]
     multi_action_commands = ["Move"]
