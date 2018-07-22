@@ -124,8 +124,9 @@ if __name__ == "__main__":
             used_actions.add(all_actions[action[0]])
     #combine initial states from each sequence of actions
     initial_state = combine_states(initial_states)
+    initial_details = get_details(initial_state)
     #increase the difficulty of the state    
-    initial_state = complexify(initial_state, goal_state)
+    initial_state = complexify(initial_state, goal_state, initial_details)
     #save the planning problem to a file with the name of the second filename given on command line
     print("Initial State:")
     print(initial_state)

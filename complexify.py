@@ -5,22 +5,17 @@ import random
 
 from state_functions import get_unique_neighbours, generate_map, reverse_direction, direction_of_coord
 
-def complexify(initial_state, goal_state, room_complexity=10, item_complexity=10):
+def complexify(initial_state, goal_state, details, room_complexity=10, item_complexity=10):
     initial_complexity = measure_complexity(initial_state,"both")
     #print(initial_complexity)
     state = copy.copy(initial_state)
     #understand what each literal means
     #get a list of room names and item names
     rooms, items = breakdown(state)
-    #add new rooms in with appropriate neighbours and unique names
-    state = add_rooms(state, goal_state, room_complexity)        
-    new_complexity = measure_complexity(state,"both")
-    #add new items into the rooms with appropriate features
-    options = {lock_doors,darken}
-    for option in options:
-        new_state = option(state)
-        if new_state != None:
-            state = new_state
+    nan = get_next_available_number(rooms)
+    while room_complexity > measure_complexity(state,"rooms"):
+        #add new rooms in with appropriate neighbours and unique names
+        state,nan,added_room_name = add_room(state, goal_state, details, nan)
 
     return state
 
@@ -52,93 +47,100 @@ def count_blockages(state):
             
     return blockages
 
-def add_rooms(state, goal, room_complexity):
+def add_room(state, goal, details, next_available_number):
     """
     get the highest unnamed room number (HRN) from form "Room11"
     add new rooms as named "Room*" where * represents a number higher than the highest number so far
     """
     failed = set() #a set of rooms that already have 4 neighbours
-    next_available_number = -1
-    while measure_complexity(state, "rooms") < room_complexity:
-        #generate a dictionary mapping each room to a coordinate relative to the starting room at (0,0)
-        room_map = generate_map(state)
-        #randomly select a room and get all surrounding coordinates that are not already assigned
-        #if no non-assigned coordinates exist, choose another room
-        while True:
-            chosen = random.choice([i for i in room_map.keys() if i not in failed])
-            valid = set([i for i in get_coord_neighbours(room_map[chosen]) if i not in room_map.values()])
-            if (len(valid) == 0) or (("At",chosen) in state) or (("At",chosen) in goal):
-                failed.add(chosen)
-            else:
-                break
-        #randomly select a coordinate from valid coords and find all rooms connected to it
-        new_room = random.choice(list(valid))
-        coord_neighbours = get_coord_neighbours(new_room)
-        named_neighbours = [pair[0] for pair in room_map.items() if pair[1] in coord_neighbours]
-        #find the next available room name in form Room* where * > 0
-        current_rooms = list(breakdown(state,"rooms"))
-        if next_available_number == -1:
-            next_available_number = get_next_available_number(current_rooms)
-        new_room_name = "Room"+str(next_available_number)
-        next_available_number += 1
-        #randomly generate a number of neighbours that will be added
-        num_neighbours = random.randint(1,len(named_neighbours))
-        neighbours_to_add = set()
-        while len(neighbours_to_add) < num_neighbours:
-            neighbours_to_add.add(random.choice(named_neighbours))
-        #add new tuples to the state describing the neighbours of the new room
-        for neighbour in neighbours_to_add:
-            direction = direction_of_coord(new_room,room_map[neighbour]) #from new room to neighbour
-            state.append(("NextTo",new_room_name,neighbour,direction))
-            state.append(("NextTo",neighbour,new_room_name,reverse_direction(direction)))
+    #generate a dictionary mapping each room to a coordinate relative to the starting room at (0,0)
+    room_map = generate_map(state)
+    #randomly select a room and get all surrounding coordinates that are not already assigned
+    #if no non-assigned coordinates exist, choose another room
+    while True:
+        chosen = random.choice([i for i in room_map.keys() if i not in failed])
+        valid = set([i for i in get_coord_neighbours(room_map[chosen]) if i not in room_map.values()])
+        if (len(valid) == 0) or (("At",chosen) in state) or (("At",chosen) in goal):
+            failed.add(chosen)
+        else:
+            break
+    #randomly select a coordinate from valid coords and find all rooms adjacent to it
+    new_room = random.choice(list(valid))
+    coord_neighbours = get_coord_neighbours(new_room)
+    named_neighbours = [pair[0] for pair in room_map.items() if pair[1] in coord_neighbours]
+    #find the next available room name in form Room* where * > 0
+    new_room_name = "Room"+str(next_available_number)
+    #randomly generate a number of neighbours that will be added
+    num_neighbours = random.randint(1,len(named_neighbours))
+    neighbours_to_add = set()
+    while len(neighbours_to_add) < num_neighbours:
+        neighbours_to_add.add(random.choice(named_neighbours))
+    #add new tuples to the state describing the neighbours of the new room
+    for neighbour in neighbours_to_add:
+        direction = direction_of_coord(new_room,room_map[neighbour]) #from new room to neighbour
+        state.append(("NextTo",new_room_name,neighbour,direction))
+        state.append(("NextTo",neighbour,new_room_name,reverse_direction(direction)))
+    
+    #maybe lock a door
+    state = lock_door(state,details,new_room_name)
+    #maybe darken the room
+    state = darken(state,details,new_room_name)
         
-    return state
+    return state, next_available_number+1, new_room_name
 
-def add_item(state):
-    items = breakdown(state,"items")
-    return state
-
-def lock_doors(state,percent=0.2):
+def lock_door(state,details,room_name,percent=0.4):
     """
     ***currently only has an effect if the player already has a key***
     ***also could break the initial path through the world***
     adds locked doors to the state
     will lock a percentage of the neighbours that aren't already locked in the state based on arg percent
     """
-    if ("Has","Key") in state:
-        new_state = copy.copy(state)
-        neighbours = get_unique_neighbours(state)
-        not_locked_neighbours = []
-        for pair in neighbours:
-            if not ("Lock",pair[0],pair[1]) in state:
-                not_locked_neighbours.append(pair)                
-        locked = random.sample(not_locked_neighbours, int(len(not_locked_neighbours)*percent))
-        for pair in locked:
-            new_state.append(("Lock",pair[0],pair[1]))
-            new_state.append(("Lock",pair[1],pair[0]))
-        return new_state
-    return None
+    for n in get_neighbours(state,room_name):
+        if random.uniform(0,1) < percent:
+            if len(details["keys"]) == 0:
+                #place a key in the world
+                place = random.choice(breakdown(state,"rooms"))
+                state.append(("In","Key",place))
+                details["keys"].add("Key")
+            if random.uniform(0,1) < .2:
+                #add a new key and use that
+                colours = ["Red","Blue","Purple","Orange","Yellow","Pink","White","Black","Green"]
+                while True:
+                    new_key = random.choice(colours) + " Key"
+                    if not new_key in details["keys"]:
+                        place = random.choice(list(breakdown(state,"rooms")))
+                        state.append(("In",new_key,place))
+                        details["keys"].add(new_key)
+                        break
+                key_required = new_key
+                print("A new key has entered the world")
+            else:
+                print(details["keys"])
+                key_required = random.choice(list(details["keys"]))
+            print(key_required)
+            state.append(("Lock",room_name,n))
+            state.append(("LockNeeds",room_name,n,key_required))
+            state.append(("Lock",n,room_name))
+            state.append(("LockNeeds",n,room_name,key_required))
+        
+    return state
     
-def darken(state,percent=0.2):
+def darken(state,details,room_name,percent=0.2):
     """
     ***currently only has an effect if the player already has a torch***
     ***also could break the initial path through the world***
     adds darkness to a percentage of the rooms in the state based on arg percent
     """
-    if ("Has","Torch") in state:
-        new_state = copy.copy(state)
-        rooms = breakdown(state,"rooms")
-        light_rooms = []
-        for room in rooms:
-            if not ("Dark",room) in state:
-                light_rooms.append(room)
-        make_dark = random.sample(light_rooms, int(len(light_rooms)*percent))
-        for room in make_dark:
-            new_state.append(("Dark",room))
-        return new_state
-    return None    
+    if random.uniform(0,1) < percent:
+        if len(details["lightsources"]) == 0:
+            #place a lightsource in the world somewhere
+            place = random.choice(breakdown(state,"rooms"))
+            state.append(("In","Torch",place))
+        #add the dark room to the state
+        state.append(("Dark",room_name))
     
-    
+    return state
+
 def get_start_location(state):
     """
     returns the name of the room the player will start in
@@ -146,6 +148,9 @@ def get_start_location(state):
     for item in state:
         if item[0] == "At":
             return item[1]
+
+def get_neighbours(state,room):
+    return [n[1] for n in get_unique_neighbours(state) if n[0] == room]
 
 def get_neighbour_counts(state):
     """

@@ -127,6 +127,7 @@ def parse_input(instruction,actions,commands,requirements,world):
     action = None
     instruction = instruction.split()
     for name,options in commands.items():
+        print(name)
         for option in options:
             if set(option.split()).issubset(set(instruction)):
                 action = name
@@ -140,6 +141,7 @@ def parse_input(instruction,actions,commands,requirements,world):
         for requirement in requirements[action]:
             #check if a defined item in details.txt is in the instruction and add it to parsed if it is
             found = False
+            print([requirement] + world.details[requirement+"s"])
             for item in world.details[requirement+"s"]:
                 #print(set(item.lower().split()),set(instruction))
                 if set(item.lower().split()).issubset(set(instruction)):
@@ -263,12 +265,12 @@ if __name__ == "__main__":
                 response = "You {0}".format(instruction)
             except TypeError:
                 response = "Sorry, I couldn't \"{0}\"".format(instruction)
+            except KeyError:
+                response = "Sorry, I don't know how to \"{0}\"".format(instruction)
             #if no action so far then check in non_functional_commands
             if not action and real_instruction[0].lower() in non_functional_commands:
                 if real_instruction[0].lower() == "inv":
                     response = "You have: " + ", ".join(get_inventory(current_state))
-            elif not action:
-                response = "Sorry, I don't understand the command \"{0}\".".format(instruction) 
 
         if action:
             definition = all_actions[action[0]]

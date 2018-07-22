@@ -183,7 +183,7 @@ commands = {
             "talk": ["talk","speak"],
            }
            
-commands["cheat gain"] = ["reach into the nethersphere and " + item for item in commands["take"]]
+commands["cheat gain"] = ["reach into the nethersphere and receive"]
 
 requirements = {
                 "move": ["direction"],

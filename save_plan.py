@@ -54,12 +54,9 @@ def concatenate_literals(items):
         
         
 def save_plan(initial, goal, actions, directoryname, details):
-    folder = False
     folderpath = "Games/" + directoryname
-    while not folder:
-        if not os.path.exists(folderpath):
-            os.makedirs(folderpath)
-            folder = True
+    if not os.path.exists(folderpath):
+        os.makedirs(folderpath)
         else:
             carry_on = input("A game with the name \"{0}\" already exists, would you like to overwrite this game (Y/n)?".format(directoryname))
             if not carry_on.lower() in ("", "y", "yes"):

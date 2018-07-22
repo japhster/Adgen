@@ -1,10 +1,3 @@
-rewrite algorithm for increase complexity thusly:
- - add room
- - random chance that a key will be placed (.1)
- - generate connections
- - for each door random chance that the door will be locked (.2)
-   - random key (that already exists in the world) required to open the door
- - random chance that (if it is not already placed) a torch is placed (.05)
- - random chance that (if a torch exists in the world) the generated room is made dark
-
 add extra ways of talking to npcs to unlock more information
+
+introduce monsters to fight, weapons, armour, hit points, experience, character saving, etc.

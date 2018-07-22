@@ -113,7 +113,7 @@ def get_details(state):
             if is_item:
                 details["items"].add(item[1])
         elif item[0] == "Contains":
-            details["item"].add(item[2])
+            details["items"].add(item[2])
     print(details)
     return details
 
