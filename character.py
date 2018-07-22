@@ -101,10 +101,12 @@ def load_character(name):
                  
         
 if __name__ == "__main__":
-    character = Character("Japhy",races["Human"])
+    #test that a character can be created
+    character = Character("Japhster",races["Human"])
+    #test that a character 
     print(character.get_details())
     character.save()
-    new_char = load_character("Japhy")
+    new_char = load_character("Japhster")
     print(new_char.get_details())
     new_char = load_character("Noone")
     
