@@ -1,2 +1,0 @@
-At(Library)
-Take(RedKey,Office), Unlock(Office,Hallway,North,RedKey), Move(Office,Hallway,North,South), Move(Hallway,Library,North,South)

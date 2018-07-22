@@ -1,4 +1,0 @@
-Any input file must have the goal state on the first line followed by any number of action
-sequences that get to the goal state on the following lines, each sequence on exactly one line
-no blank lines anywhere in the input file
-each action should be separated by ", " and each item inside each action should be separated by ","

@@ -1,3 +1,0 @@
-keys:Red Key
-containers:Box
-items:Book,Torch
