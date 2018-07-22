@@ -103,11 +103,13 @@ def load_character(name):
 if __name__ == "__main__":
     #test that a character can be created
     character = Character("Japhster",races["Human"])
-    #test that a character 
+    #test that a characters details work properly and that it can be saved
     print(character.get_details())
     character.save()
+    #test that a character can be loaded
     new_char = load_character("Japhster")
     print(new_char.get_details())
+    #test that the program can deal with non-existant characters
     new_char = load_character("Noone")
     
 
