@@ -241,24 +241,51 @@ if __name__ == "__main__":
             #defines what type of object anything in the world is
             details = json.load(f)
         world = World(details)
+    
     #LOAD CHARACTER
-    print("1) New Character\n2) Load Character\n3) Play Without A Character")
-    option = input(">").lower()
-    if option =="1" or "new" in option:
-        pass
-    if option == "2" or "load" in option:
-        character = None
-        while not character:
-            character = load_character(input("Enter the name of your existing character (leave blank to return to the menu):\n"))
-            if not character:
+    character = None
+    while not character:
+        os.system("clear")
+        print("Enter the number of the option you wish to select.")  
+        print("1) New Character\n2) Load Character\n3) Play Without A Character")
+        option = input(">").lower()
+        if option =="1" or "new" in option:
+            
+            while True:
+                name = input("Enter the name of your new character (leave blank to return to the main menu):\n").title()
+                
                 with open("Characters/characters.txt") as f:
-                    characters = f.readlines().strip()
-                    print(characters)
-                    print("Existing characters are:\n{0}".format("\n".join(characters)))
-    if option == "3" or "play" in option:
-        pass
-        
-    loading_screen(character)
+                    characters = [i.strip() for i in f.readlines()]
+                    if name in characters:
+                        print("That name is already taken.")
+                    else:
+                        break
+            if name:
+                while True:
+                    race = input("Enter the race of your new character:\n").upper()
+                    if race in races.keys():
+                        break
+                    else:
+                        print("Invalid race name.")
+                gender = input("Enter the gender of your new character:\n").title()
+                character = Character(name,gender,race)
+        elif option == "2" or "load" in option:
+            while not character:
+                name = input("Enter the name of your existing character (leave blank to return to the main menu):\n")
+                if not name:
+                    break
+                character = load_character(name)
+                if not character:
+                    with open("Characters/characters.txt") as f:
+                        characters = [i.strip() for i in f.readlines()]
+                        print(characters)
+                        print("Existing characters are:\n{0}".format("\n".join(characters)))
+            if name:
+                break
+        elif option == "3" or "play" in option:
+            break
+    if character:
+        loading_screen(character)
         
     #PLAY GAME
     current_state = copy.copy(initial_state)
