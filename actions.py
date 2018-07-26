@@ -7,8 +7,7 @@ all_actions = {
            "Move": (
                     ("Move", "From", "To", "DirectionFT", "DirectionTF"),
                     (("At","From"),("!At","To"),("NextTo","From","To","DirectionFT"),("NextTo","To","From","DirectionTF"),
-                     ("!Lock","From","To"),
-                     ("!Dark","To"),("!HiddenPath","To","From")),
+                     ("!Lock","From","To"),("!Dark","To"),("!HiddenPath","To","From"),("!Occupied","From")),
                     (("At","To"),("!At","From"))
                    ),
            "Unlock": (
@@ -21,7 +20,7 @@ all_actions = {
                      ),
            "Take": (
                     ("Take","Item","Room"),
-                    (("At","Room"), ("In","Item","Room"),("!Has","Item")),
+                    (("At","Room"), ("In","Item","Room"),("!Has","Item"),("Takeable","Item")),
                     (("Has","Item"), ("!In","Item","Room"))
                    ),
            "Drop": (
@@ -52,7 +51,14 @@ all_actions = {
                          ("CheatGain","Item"),
                          (("!Has","Item"),),
                          (("Has","Item"),)
-                        )
+                        ),
+           "Fight": (
+                     ("Fight","Monster","MonsterLocation","Weapon"),
+                     (("At","MonsterLocation"),("Enemy","Monster"),("In","Monster","MonsterLocation"),("Has","Weapon"),
+                     ("Purpose","Weapon","Fighting"),("Occupied","MonsterLocation")),
+                     (("!In","Monster","MonsterLocation"),("!Occupied","MonsterLocation"))
+                    ),
+                     
           }
           
 class Action(object):
@@ -154,6 +160,20 @@ class Talk(Action):
             if len(person_knows) == 2:
                return person_knows
 
+        
+class Fight(Action):
+    
+    def __init__(self, state, name, monster):
+        super(Fight,self).__init__(state,"Fight")
+        self.monster = monster
+        self.action = (self.name,self.monster,self.current_location,self.get_weapon())
+        
+    def get_weapon(self):
+        for item in self.state:
+            if item[0] == "Has" and  ("Purpose",item[1],"Fighting") in self.state:
+                return item[1]
+            
+        
 class CheatGain(Action):
     
     def __init__(self, state, name, item):
@@ -161,6 +181,7 @@ class CheatGain(Action):
         self.name = "CheatGain"
         self.item = item
         self.action = (self.name, self.item)
+
 
 actions = {
            "move":Move,
@@ -170,6 +191,7 @@ actions = {
            "drop": Drop,
            "open": Open,
            "talk": Talk,
+           "fight": Fight,
            "cheat gain": CheatGain,
           }
 
@@ -181,6 +203,7 @@ commands = {
             "drop": ["drop","let go of"],
             "open": ["open","smash","break"],
             "talk": ["talk","speak"],
+            "fight": ["fight","attack","kill"],
            }
            
 commands["cheat gain"] = ["reach into the nethersphere and receive"]
@@ -193,6 +216,7 @@ requirements = {
                 "open": ["container"],
                 "clear darkness": ["direction","item"],
                 "talk": ["person"],
+                "fight": ["monster"],
                 "cheat gain": ["item"],
                }
 

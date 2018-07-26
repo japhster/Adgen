@@ -91,6 +91,7 @@ def get_details(state):
      - lightsources
      - items (including all of the above)
      - people
+     - monsters
      - directions
     """
     details = defaultdict(set)
@@ -114,6 +115,8 @@ def get_details(state):
                 details["items"].add(item[1])
         elif item[0] == "Contains":
             details["items"].add(item[2])
+        elif item[0] == "Enemy":
+            details["monsters"].add(item[1])
     print(details)
     return details
 

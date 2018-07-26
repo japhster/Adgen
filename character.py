@@ -49,6 +49,7 @@ class Character(object):
         self.level = level #character's level
         self.exp_requirement = self.race.base_exp*(self.level**self.race.level_factor) #the required exp to level up
         self.exp = exp #character's experience points
+        self.gold = 0
         self.inv = self.race.inv + inv #character's inventory
         self.password = password #a password to "protect" the character (not currently used)
         

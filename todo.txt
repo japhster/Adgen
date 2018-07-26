@@ -1,6 +1,20 @@
 add extra ways of talking to npcs to unlock more information
 
+maybe split the initial state/goal state from the list of actions in the world.txt file
+ - actions are not unique to an adventure, so why have multiple copies of the same information?
+
 introduce monsters to fight, weapons, armour, hit points, experience, character saving, etc.
 when creating an adventure the user needs to specify:
     - exp received on completion of the adventure
     - monster exp, hit points and damage (could all be ranges or prespecified and user picks from a list)
+    - items that can be carried through to different adventures (permanent items (p-items)) vs. items that are specific to that adventure
+      (single-use items (su-items)
+
+at the end of an adventure, all items in the player's inventory that are p-items will be saved to the adventure's inventory.
+if the adventure is ended before the player reaches the goal, a prompt will ask if the player wishes to save their progress.
+ - if so, a game directory labelled as the game's title will be created in the charater's save directory, with a new copy of the
+   world.txt found in the game that can be loaded on introduction to the game
+
+introduce a special, unique adventure called "The Marketplace"
+ - here the player can sell unwanted p-items to different vendors for a price, and purchase wanted p-items with money they have
+   earned

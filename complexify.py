@@ -110,6 +110,7 @@ def lock_door(state,details,room_name,percent=0.4):
                     if not new_key in details["keys"]:
                         place = random.choice(list(breakdown(state,"rooms")))
                         state.append(("In",new_key,place))
+                        state.append(("Takeable",new_key))
                         details["keys"].add(new_key)
                         break
                 key_required = new_key
@@ -136,6 +137,8 @@ def darken(state,details,room_name,percent=0.2):
             #place a lightsource in the world somewhere
             place = random.choice(breakdown(state,"rooms"))
             state.append(("In","Torch",place))
+            state.append(("Takeable","Torch"))
+            details["lightsources"].add("Torch")
         #add the dark room to the state
         state.append(("Dark",room_name))
     
