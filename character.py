@@ -41,7 +41,7 @@ races = {
 
 class Character(object):
 
-    def __init__(self, name, gender, race, hp=0, level=1, exp=0, inv=[], password=""):
+    def __init__(self, name, gender, race, hp=0, level=1, gold=0, exp=0, inv=[], password=""):
         self.name = name #name of character
         self.gender = gender #character's gender
         self.race = race #character's race object (e.g. Human)
@@ -49,7 +49,7 @@ class Character(object):
         self.level = level #character's level
         self.exp_requirement = self.race.base_exp*(self.level**self.race.level_factor) #the required exp to level up
         self.exp = exp #character's experience points
-        self.gold = 0
+        self.gold = gold
         self.inv = self.race.inv + inv #character's inventory
         self.password = password #a password to "protect" the character (not currently used)
         
