@@ -1,4 +1,5 @@
 import os
+import json
 
 from world import World,Room
 from items import Item,Lightsource,Key,Container,Money
@@ -13,32 +14,54 @@ def print_surroundings(world):
 
 if __name__ == "__main__":
     #CREATE WORLD
-    rooms = {
-             "Library":Room("Library",neighbours={"North":"Hallway"}),
-             "Hallway":Room("Hallway",neighbours={"South":"Library","North":"Kitchen"},coord=(0,1)),
-             "Bedroom":Room("Bedroom",coord=(1,1)),
-             "Kitchen":Room("Kitchen",coord=(0,2),neighbours={"South":"Hallway"}),
+    room_descs = {
+             "Library":{"neighbours":{"North":"Hallway"}},
+             "Hallway":{"neighbours":{"South":"Library","North":"Kitchen"},"coord":(0,1),"npcs":["Bob"],"locks":[("North","Red Key")]},
+             "Bedroom":{"coord":(1,1),"items":["Red Key"]},
+             "Kitchen":{"coord":(0,2),"neigbours":{"South":"Hallway"},"items":["Book"],"locks":[("South","Red Key")]},
             }
-    rooms["Hallway"].npcs.append(Traveller("Bob",("Hallway","Bedroom")))
-    rooms["Bedroom"].items.append(Key("Red Key"))
-    rooms["Kitchen"].items.append(Item("Book"))
-    rooms["Hallway"].locks.append(("North","Red Key"))
-    rooms["Kitchen"].locks.append(("South","Red Key"))
-    world = World("Test", "Library",Player("Japh","Male","Human"), rooms=rooms)
-
+    rooms = {}
+    #for each room in the descriptions
+    for room in room_descs:
+        #create a new room with the name given in the descriptions
+        rooms[room] = Room(room)
+        #set all attributes required from the descriptions
+        for arg in room_descs[room]:
+           setattr(rooms[room],arg,room_descs[room][arg])
+           
+    npcs = {
+            "Bob":Traveller("Bob",("Hallway","Bedroom")),
+           }
+    items = {
+             "Red Key":Key("Red Key"),
+             "Book":Item("Book"),
+            }
+    with open("test.json","w") as f:
+        json.dump(room_descs,f)
+    world = World("Test", "Library",Player("Japh","Male","Human"), rooms=rooms,items=items,npcs=npcs)
+    world.save_world()
+    sys.exit(0)
     def goal():
         return "Book" in [item.name for item in world.rooms["Library"].items]
 
     #PLAY GAME
+    response = ""
     while not goal():
         os.system("clear")
+        print(response if response else "")
         print_surroundings(world)
         command = input(">").split()
         action = command[0].lower()
         arg = " ".join(command[1:]).title()
-        if arg:
-            getattr(world,action)(arg)
-        else:
-            getattr(world,action)()
-            
+        try:
+            if arg:
+                response = getattr(world,action)(arg)
+            else:
+                response = getattr(world,action)()
+        except IndexError:
+            pass
+        """
+        except AttributeError as e:
+            response = "You don't understand how to \"{0}\".".format(" ".join(command))
+        """    
     print("You Win!")

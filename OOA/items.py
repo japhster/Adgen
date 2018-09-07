@@ -1,7 +1,8 @@
-class Item(object):
+from base import WorldPart
+
+class Item(WorldPart):
 
     def __init__(self,name,category="Item"):
-        self.name = name
         self.category = category
         
     def __str__(self):

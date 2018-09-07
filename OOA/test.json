@@ -1,0 +1,1 @@
+{"Kitchen": {"neigbours": {"South": "Hallway"}, "coord": [0, 2], "locks": [["South", "Red Key"]], "items": ["Book"]}, "Library": {"neighbours": {"North": "Hallway"}}, "Bedroom": {"coord": [1, 1], "items": ["Red Key"]}, "Hallway": {"coord": [0, 1], "locks": [["North", "Red Key"]], "npcs": ["Bob"], "neighbours": {"South": "Library", "North": "Kitchen"}}}

@@ -2,44 +2,20 @@ import copy
 
 from helper_funcs import reverse_direction, get_coord_from_direction, get_direction_from_coords
 
-class Player(object):
-
-    def __init__(self, name, gender, race, hp=0, level=1, gold=0, exp=0, inv=[], password=""):
-        self.name = name #name of character
-        """
-        self.gender = gender #character's gender
-        self.race = race #character's race object (e.g. Human)
-        self.hp = hp if hp > 0 else sum([random.randint(1,i) for i in self.race.hp_dice]) #character's hit points
-        self.level = level #character's level
-        self.exp_requirement = self.race.base_exp*(self.level**self.race.level_factor) #the required exp to level up
-        self.exp = exp #character's experience points
-        self.gold = gold
-        """
-        self.inv = inv #character's inventory
-        self.password = password #a password to "protect" the character (not currently used)
+class WorldPart(object):
+    
+    def __init__(self,name):
+        self.name = name
         
-    def level_up(self):
-        """
-        updates according to race details
-         - the characters level
-         - the characters hp
-         - how much exp the character requires for the next level
-        call at the end of an adventure
-        """
-        while self.exp > self.exp_requirement:
-            self.level += 1
-            self.hp += sum([random.randint(1,i) for i in self.race.hp_dice])
-            self.exp_requirement = self.race.base_hp*(self.level ** self.race.level_factor)
-            
-    def get_details(self):
-        return "{0} is a {1} level {2} that is currently carrying {3}".format(self.name.title(), self.level, self.race.name, "\n" + "\n".join(self.inv) if self.inv else "nothing")
+    def get_dict_format(self):
+        info = [i for i in dir(self) if not i.startswith("__") and not callable(getattr(self,i))]
+        print(info)
+        return_value = {}
+        for i in info:
+            print(i,getattr(self,i))
+            return_value[i] = getattr(self,i)
 
-    def print_inv(self):
-        print("I am currently carrying:\n" + "\n".join(self.inv))
-
-
-
-
+        return return_value
 
 if __name__ == "__main__":
     from world import World,Room

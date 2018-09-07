@@ -1,5 +1,6 @@
+from base import WorldPart
 
-class Player(object):
+class Player(WorldPart):
 
     def __init__(self, name, gender, race, hp=0, level=1, gold=0, exp=0, inv=[], password=""):
         self.name = name #name of character
@@ -32,7 +33,7 @@ class Player(object):
         return "{0} is a {1} level {2} that is currently carrying {3}".format(self.name.title(), self.level, self.race.name, "\n" + "\n".join(self.inv) if self.inv else "nothing")
 
     def print_inv(self):
-        print("I am currently carrying:\n" + "\n".join(self.inv))
+        return "You are currently carrying:\n" + "\n".join(self.inv) if self.inv else "You don't have anything at the moment."
 
 
 

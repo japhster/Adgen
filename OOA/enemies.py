@@ -1,5 +1,6 @@
+from base import WorldPart
 
-class Enemy(object):
+class Enemy(WorldPart):
     
     def __init__(self,name,species):
         """
