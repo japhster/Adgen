@@ -1,1 +1,1 @@
-{"neighbours": {"North": "Hallway"}, "coord": [0, 0], "name": "Library", "npcs": [], "description": "", "locks": [], "is_dark": false, "enemies": [], "items": []}
+{"items": [], "enemies": [], "locks": [], "description": "", "coord": [0, 0], "name": "Library", "npcs": [], "neighbours": {"North": "Hallway"}, "is_dark": false}

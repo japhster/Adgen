@@ -124,7 +124,7 @@ def goal_reached(state,goal_state):
 def parse_input(instruction,actions,commands,requirements,world):
     #remove punctuation
     exclude = set(string.punctuation)
-    instruction = "".join(ch for ch in instruction if ch not in exclude)
+    instruction = "".join(ch.lower() for ch in instruction if ch not in exclude)
     #get action
     action = None
     instruction = instruction.split()
@@ -146,8 +146,10 @@ def parse_input(instruction,actions,commands,requirements,world):
             print([requirement] + world.details[requirement+"s"])
             for item in world.details[requirement+"s"]:
                 #print(set(item.lower().split()),set(instruction))
+                print(set(item.lower().split()),set(instruction))
                 if set(item.lower().split()).issubset(set(instruction)):
                     parsed.append(item)
+                    print("Hooray")
                     found = True
                     break
             if not found:
@@ -187,7 +189,6 @@ def perform_pre_actions(state,all_actions,conflicts,move_action):
         perform_action(state,unlock_postconds)
 
     if "!Dark" in conflicts:
-        pass
         #build cleardarkness action from scratch
         #find all light sources in the world and check if the player has any of them
         #if it doesn't find one the player has then that is okay, it will fail on the next step
@@ -222,6 +223,7 @@ def loading_screen(character):
         time.sleep(0.5)
         extra += "."
     print()
+
 
 if __name__ == "__main__":
     """

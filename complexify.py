@@ -3,7 +3,7 @@ import re
 from collections import defaultdict
 import random
 
-from state_functions import get_unique_neighbours, generate_map, reverse_direction, direction_of_coord
+from state_functions import get_unique_neighbours, generate_map, reverse_direction, direction_of_coord, get_coord_neighbours
 
 def complexify(initial_state, goal_state, details, room_complexity=10, item_complexity=10):
     initial_complexity = measure_complexity(initial_state,"both")
@@ -90,21 +90,21 @@ def add_room(state, goal, details, next_available_number):
 
 def lock_door(state,details,room_name,percent=0.4):
     """
-    ***currently only has an effect if the player already has a key***
-    ***also could break the initial path through the world***
     adds locked doors to the state
     will lock a percentage of the neighbours that aren't already locked in the state based on arg percent
     """
+    colours = ["Red","Blue","Purple","Orange","Yellow","Pink","White","Black","Green"]
     for n in get_neighbours(state,room_name):
         if random.uniform(0,1) < percent:
             if len(details["keys"]) == 0:
+                new_key = random.choice(colours) + " Key"
                 #place a key in the world
-                place = random.choice(breakdown(state,"rooms"))
-                state.append(("In","Key",place))
-                details["keys"].add("Key")
+                place = random.choice(list(breakdown(state,"rooms")))
+                state.append(("In",new_key,place))
+                state.append(("Takeable",new_key))
+                details["keys"].add(new_key)
             if random.uniform(0,1) < .2:
                 #add a new key and use that
-                colours = ["Red","Blue","Purple","Orange","Yellow","Pink","White","Black","Green"]
                 while True:
                     new_key = random.choice(colours) + " Key"
                     if not new_key in details["keys"]:
@@ -116,9 +116,7 @@ def lock_door(state,details,room_name,percent=0.4):
                 key_required = new_key
                 print("A new key has entered the world")
             else:
-                print(details["keys"])
                 key_required = random.choice(list(details["keys"]))
-            print(key_required)
             state.append(("Lock",room_name,n))
             state.append(("LockNeeds",room_name,n,key_required))
             state.append(("Lock",n,room_name))
@@ -128,16 +126,15 @@ def lock_door(state,details,room_name,percent=0.4):
     
 def darken(state,details,room_name,percent=0.2):
     """
-    ***currently only has an effect if the player already has a torch***
-    ***also could break the initial path through the world***
     adds darkness to a percentage of the rooms in the state based on arg percent
     """
     if random.uniform(0,1) < percent:
         if len(details["lightsources"]) == 0:
             #place a lightsource in the world somewhere
-            place = random.choice(breakdown(state,"rooms"))
+            place = random.choice(list(breakdown(state,"rooms")))
             state.append(("In","Torch",place))
             state.append(("Takeable","Torch"))
+            state.append(("Purpose","Torch","Light"))
             details["lightsources"].add("Torch")
         #add the dark room to the state
         state.append(("Dark",room_name))
@@ -180,8 +177,6 @@ def get_next_available_number(rooms):
         
     return next_available_number
 
-def get_coord_neighbours(coord):
-    return set([(coord[0]+i[0],coord[1]+i[1]) for i in [(0,1),(1,0),(0,-1),(-1,0)]])
     
         
 def measure_complexity(state, measure="both"):
@@ -240,20 +235,4 @@ if __name__ == "__main__":
     state = darken(state)
     print(state, measure_complexity(state, "items"))
     """
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

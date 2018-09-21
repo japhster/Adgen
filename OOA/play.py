@@ -1,5 +1,6 @@
 import os
 import json
+import sys
 
 from world import World,Room
 from items import Item,Lightsource,Key,Container,Money

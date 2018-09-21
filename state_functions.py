@@ -120,7 +120,8 @@ def get_details(state):
     print(details)
     return details
 
-
+def get_coord_neighbours(coord):
+    return set([(coord[0]+i[0],coord[1]+i[1]) for i in [(0,1),(1,0),(0,-1),(-1,0)]])
 
 
 
